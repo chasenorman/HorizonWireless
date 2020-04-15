@@ -1,3 +1,5 @@
+import java.util.Random;
+
 public class Edge implements Comparable<Edge> {
     int u;
     int v;
@@ -11,7 +13,7 @@ public class Edge implements Comparable<Edge> {
 
     public int compareTo(Edge e) {
         if(w != e.w){
-            return w - e.w;
+            return e.w - w;
         } else if (v != e.v) {
             return v - e.v;
         } else {
@@ -25,5 +27,10 @@ public class Edge implements Comparable<Edge> {
 
     public String toString() {
         return u + " " + v + " " + w/(float)1000;
+    }
+
+    public static Edge random(int n) {
+        Random r = new Random();
+        return new Edge(r.nextInt(n), r.nextInt(n), r.nextInt(100000));
     }
 }
