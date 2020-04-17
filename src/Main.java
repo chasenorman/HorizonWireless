@@ -10,7 +10,7 @@ public class Main {
     static long t;
 
     public static void main(String[] args) throws IOException {
-        Graph.random(40).save("src/graph.txt");
+        //Graph.random(30).save("src/graph.txt");
         t = System.currentTimeMillis();
         BranchBound.solve(Graph.from("src/graph.txt"), "src/output.txt");
     }

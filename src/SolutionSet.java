@@ -1,19 +1,61 @@
 import java.util.*;
 
 public class SolutionSet implements BranchBound {
+    static class Node implements Iterable<Edge> {
+        public static Node NULL = new Node();
+
+        Edge e;
+        Node n;
+        int size = 0;
+
+        public Node(Edge e, Node n) {
+            this.e = e;
+            this.n = n;
+            size = n.size + 1;
+        }
+
+        private Node() {}
+
+        public TreeSet<Edge> edges() {
+            TreeSet<Edge> result = new TreeSet<>();
+            Node n = this;
+            while (n != NULL) {
+                result.add(n.e);
+                n = n.n;
+            }
+            return result;
+        }
+
+        public Iterator<Edge> iterator() {
+            Node t = this;
+            return new Iterator<Edge>() {
+                Node current = t;
+
+                @Override
+                public boolean hasNext() {
+                    return current != NULL;
+                }
+
+                @Override
+                public Edge next() {
+                    Edge result = current.e;
+                    current = current.n;
+                    return result;
+                }
+            };
+        }
+    }
+
     Graph G;
-    int[][] distance;
-    TreeSet<Edge> edges;
+    Node edge = Node.NULL;
     HashSet<Edge> forbidden;
     HashSet<Integer> must = new HashSet<>();
     int cost;
+    int maxsize = 0;
 
     public SolutionSet(Graph G) {
         this.G = G;
-        edges = new TreeSet<>();
         forbidden = new HashSet<>();
-
-        distance = new int[G.n][G.n];
 
         for(int v = 0; v < G.n; v++) { //possibly min-cuts could be used.
             if (G.incident[v].size() == 1) {
@@ -23,79 +65,114 @@ public class SolutionSet implements BranchBound {
         }
     }
 
-    private SolutionSet(Graph G, TreeSet<Edge> edges, HashSet<Integer> prevMust) throws IllegalArgumentException {
-        this.G = G;
-        this.edges = edges;
+    private SolutionSet() { }
 
-        must = new HashSet<>(prevMust);
-        must.add(edges.last().u);
-        must.add(edges.last().v);
+    private static SolutionSet next(Graph G, Node edge, HashSet<Integer> prevMust) {
+        SolutionSet s = new SolutionSet();
 
-        forbidden = new HashSet<>();
+        s.G = G;
+        s.edge = edge;
 
-        UnionFind u = new UnionFind(G.n);
-        for (Edge e : edges) {
-            assert u.find(e.u) != u.find(e.v);
-            u.union(e.u, e.v);
-        }
-        for (Edge e : G.edges) {
-            if (!edges.contains(e) && u.find(e.u) == u.find(e.v)) {
-                forbidden.add(e);
-            }
-        }
-
-        //SortedSet<Edge> f = G.edges.headSet(edges.last());
-        for (Edge e : G.edges.headSet(edges.last())) {
-            if (!edges.contains(e)) {
-                forbidden.add(e);
-            }
-        }
-        //f.removeAll(edges);
-        //forbidden.addAll(f);
-
+        s.must = new HashSet<>(prevMust);
+        s.must.add(edge.e.u);
+        s.must.add(edge.e.v);
 
         // Floyd-Warshall to find distance array
-        distance = new int[G.n][G.n];
+        int[][] distance = new int[G.n][G.n];
         for (int x = 0; x < G.n; x++) {
             for (int y = 0; y < G.n; y++) {
                 distance[x][y] = x == y ? 0 : Graph.INF;
             }
         }
-        for (Edge e : edges) {
+        for (Edge e : edge) {
             distance[e.u][e.v] = e.w;
             distance[e.v][e.u] = e.w;
         }
-        for (Edge e : remaining()) {
+        for (Edge e : s.remaining()) {
             distance[e.u][e.v] = e.w;
             distance[e.v][e.u] = e.w;
         }
 
+        //https://cs.stackexchange.com/questions/26344/floyd-warshall-algorithm-on-undirected-graph
+        for(int k = 0; k < G.n; k++) {
+            for(int i = 0; i < G.n; i++) {
+                int distki = (k<i)?distance[k][i]:distance[i][k];
+                if(k == i || distki == Graph.INF) {
+                    continue;
+                }
 
-        for (int z = 0; z < G.n; z++) {
-            for (int x = 0; x < G.n; x++) {
-                for (int y = 0; y < G.n; y++) { // can this be improved for undirected?
-                    if (distance[x][y] > distance[x][z] + distance[z][y]) {
-                        distance[x][y] = distance[x][z] + distance[z][y];
+                for(int j = i+1; j < G.n; j++) {
+                    int distkj = (k<j)?distance[k][j]:distance[j][k];
+                    if(k == j || i == j || distkj == Graph.INF) {
+                        continue;
+                    }
+                    int via = distki + distkj;
+                    if(via < distance[i][j]) {
+                        distance[i][j] = via;
+                        distance[j][i] = via;
+                        //prev[i][j] = k;
                     }
                 }
             }
         }
 
-        for (int i : must) { // this is inefficient.
-            for (int j : must) {
-                if (distance[i][j] == Graph.INF) {
-                    throw new IllegalArgumentException(); // more of these must be made.
+        Object[] arr = s.must.toArray();
+        for (int i = 0; i < arr.length; i++) { // this is inefficient.
+            for (int j = i+1; j < arr.length; j++) {
+                if (distance[(Integer)arr[i]][(Integer)arr[j]] == Graph.INF) {
+                    return null;
                 }
-                cost += distance[i][j];
+                s.cost += 2*distance[(Integer)arr[i]][(Integer)arr[j]];
             }
         }
+
+        s.forbidden = new HashSet<>();
+
+        UnionFind u = new UnionFind(G.n);
+        for (Edge e : edge) {
+            assert u.find(e.u) != u.find(e.v);
+            u.union(e.u, e.v);
+        }
+        for (Edge e : G.edges) {
+            if (u.find(e.u) == u.find(e.v)) {
+                s.forbidden.add(e);
+            }
+        }
+
+        SortedSet<Edge> f = G.edges.headSet(edge.e);
+        s.forbidden.addAll(f);
+        for (Edge e : edge) {
+            s.forbidden.remove(e);
+        }
+
+        int v = s.must.iterator().next();
+        HashSet<Integer> possible = new HashSet<>();
+        for (int i = 0; i < G.n; i++) {
+            if (distance[v][i] != Graph.INF) {
+                possible.add(i);
+            }
+        }
+        s.maxsize = possible.size();
+
+        Outer: for(int i = 0; i < G.n; i++) {
+            if (!possible.contains(i)) {
+                for (Edge e : G.incident[i]) {
+                    if (possible.contains(e.v)) {
+                        continue Outer;
+                    }
+                }
+                return null;
+            }
+        }
+
+        return s;
     }
 
     @Override
     public List<BranchBound> branch() {
         ArrayList<BranchBound> result = new ArrayList<>();
-        if (Solution.isValid(G, edges)) {
-            result.add(new Solution(G, edges));
+        if (isValidSolution()) {
+            result.add(new Solution(G, edge.edges()));
         }
 
 
@@ -106,26 +183,61 @@ public class SolutionSet implements BranchBound {
 
 
         for (Edge e : remaining) {
-            Main.start();
-            TreeSet<Edge> edges1 = new TreeSet<>(edges);
-            edges1.add(e);
+            Node n = new Node(e, edge);
 
-            try {
-                SolutionSet s = new SolutionSet(G, edges1, must);
+            SolutionSet s = next(G, n, must);
+            if (s != null) {
                 result.add(s);
-            } catch (IllegalArgumentException ignored) {
-
             }
-            Main.end();
         }
         return result;
     }
 
+    private boolean isValidSolution() {
+        if (edge.size < G.n/2 || edge.size > G.n-1) {
+            return false;
+        }
+
+        HashSet<Integer> vertices = new HashSet<>();
+        for (Edge e : edge) {
+            vertices.add(e.u);
+            vertices.add(e.v);
+        }
+
+        Outer: for(int i = 0; i < G.n; i++) {
+            if (!vertices.contains(i)) {
+                for (Edge e : G.incident[i]) {
+                    if (vertices.contains(e.v)) {
+                        continue Outer;
+                    }
+                }
+                return false;
+            }
+        }
+
+        UnionFind u = new UnionFind(G.n);
+        for (Edge e : edge) {
+            if (u.find(e.u) == u.find(e.v)) {
+                return false;
+            }
+            u.union(e.u, e.v);
+        }
+
+        int test = u.find(edge.e.u);
+        for (Edge e : edge) {
+            if (u.find(e.u) != test) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     public SortedSet<Edge> remaining() {
-        if (edges.isEmpty()) {
+        if (edge == Node.NULL) {
             return G.edges;
         }
-        Edge e = G.edges.higher(edges.last());
+        Edge e = G.edges.higher(edge.e);
         if (e == null) {
             return Collections.emptySortedSet();
         }
@@ -133,13 +245,7 @@ public class SolutionSet implements BranchBound {
     }
 
     public double bound() {
-        HashSet<Integer> possible = new HashSet<>(must);
-        for (Edge e : remaining()) {
-            possible.add(e.u);
-            possible.add(e.v);
-        }
-
-        return cost/(double)(possible.size() * (possible.size()-1));
+        return cost/(double)(maxsize * (maxsize-1));
     }
 
     @Override
@@ -153,6 +259,6 @@ public class SolutionSet implements BranchBound {
     }
 
     public String toString() {
-        return edges.toString();
+        return edge.edges().toString();
     }
 }
