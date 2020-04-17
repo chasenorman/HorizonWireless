@@ -26,7 +26,10 @@ public interface BranchBound extends Comparable<BranchBound> {
             best = s.bound();
             System.out.println("Loaded solution with bound " + (best/1000));
         } catch (Exception ignored) {
-            System.out.println("No loaded solution found. Starting from scratch.");
+            Solution s = G.mst();
+            s.save(output);
+            best = s.bound();
+            System.out.println("No loaded solution found. Using MST " + (best/1000));
         }
 
         Stack<BranchBound> todo = new Stack<>();
@@ -48,15 +51,16 @@ public interface BranchBound extends Comparable<BranchBound> {
             else {
                 for (BranchBound next : b.branch()) {
                     Main.total++;
+
                     if (next.bound() < best) {
                         todo.add(next);
                     } else {
                         Main.rejections++;
                     }
 
-                    /*if (Main.total % 10000 == 5000) {
-                        System.out.println("rejection rate: " + Main.rejections / (float)Main.total + ", size: " + todo.size());
-                    }*/
+                    if (Main.total % 10000 == 5000) {
+                        System.out.println("rejection rate: " + Main.rejections / (float)Main.total + ", size: " + todo.size() + ", percent: " + Main.in/(float)Main.out);
+                    }
                 }
             }
         }

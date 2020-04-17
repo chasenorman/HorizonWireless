@@ -44,6 +44,15 @@ public class SolutionSet implements BranchBound {
             }
         }
 
+        //SortedSet<Edge> f = G.edges.headSet(edges.last());
+        for (Edge e : G.edges.headSet(edges.last())) {
+            if (!edges.contains(e)) {
+                forbidden.add(e);
+            }
+        }
+        //f.removeAll(edges);
+        //forbidden.addAll(f);
+
 
         // Floyd-Warshall to find distance array
         distance = new int[G.n][G.n];
@@ -89,19 +98,26 @@ public class SolutionSet implements BranchBound {
             result.add(new Solution(G, edges));
         }
 
-        for (Edge e : remaining()) {
-            if (!forbidden.contains(e)) { // some other conditions may be required here.
-                TreeSet<Edge> edges1 = new TreeSet<>(edges);
-                edges1.add(e);
-                try {
-                    SolutionSet s = new SolutionSet(G, edges1, must);
-                    result.add(s);
-                } catch (IllegalArgumentException ignored) {
 
-                }
-            }
+        SortedSet<Edge> remaining = remaining();
+        if (!remaining.isEmpty()) {
+            remaining.removeAll(forbidden); // some other conditions may be required here.
         }
 
+
+        for (Edge e : remaining) {
+            Main.start();
+            TreeSet<Edge> edges1 = new TreeSet<>(edges);
+            edges1.add(e);
+
+            try {
+                SolutionSet s = new SolutionSet(G, edges1, must);
+                result.add(s);
+            } catch (IllegalArgumentException ignored) {
+
+            }
+            Main.end();
+        }
         return result;
     }
 

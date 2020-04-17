@@ -5,7 +5,7 @@ public class Solution implements BranchBound {
     HashSet<Integer> vertices;
     TreeSet<Edge> edges;
     Graph G;
-    int cost = -1;
+    long cost = -1;
 
     public Solution(Graph G, TreeSet<Edge> edges) {
         this.G = G;

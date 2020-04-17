@@ -33,4 +33,8 @@ public class Edge implements Comparable<Edge> {
         Random r = new Random();
         return new Edge(r.nextInt(n), r.nextInt(n), r.nextInt(100000));
     }
+
+    public Edge standard() {
+        return u > v ? reversed() : this;
+    }
 }
