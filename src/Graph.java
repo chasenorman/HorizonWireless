@@ -140,7 +140,7 @@ public class Graph {
                 if (timeVisited[root] < oldestDescendant[child]) {
                     // A child tree of mine is completely self-contained.
                     // If I have degree > 1 I'm ab ridge
-                    if (degree[root] > 1) { // FIXME: this isn't actually part of the definition of a bridge, but do we still want it?
+                    if (degree[root] > 1 && degree[child] > 1) {
                         bridges.add(edge);
                     }
                 }
