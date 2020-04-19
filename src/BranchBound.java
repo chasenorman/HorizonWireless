@@ -39,7 +39,7 @@ public interface BranchBound {
                 for (BranchBound i : todo) {
                     total -= i.size();
                 }
-                System.out.println("percent: " + total);
+                System.out.println("percent: " + total + ", time: " + Main.percent());
             }
 
             if (b instanceof Solution) {

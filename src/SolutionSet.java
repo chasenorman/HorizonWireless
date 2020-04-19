@@ -92,7 +92,9 @@ public class SolutionSet implements BranchBound {
     @Override
     public double bound() {
         if (cost == -1) {
+            Main.start();
             computeCost();
+            Main.stop();
         }
         return cost/(double)(maxSize*(maxSize-1));
     }
@@ -144,7 +146,7 @@ public class SolutionSet implements BranchBound {
                 if (distance[i.last][j.last] == Graph.INF) {
                     throw new IllegalArgumentException();
                 }
-                cost += 2*distance[i.last][j.last];
+                cost += distance[i.last][j.last];
             }
         }
 
@@ -155,7 +157,7 @@ public class SolutionSet implements BranchBound {
                 if (distance[required[i]][required[j]] == Graph.INF) {
                     throw new IllegalArgumentException();
                 }
-                cost += 2*distance[required[i]][required[j]];
+                cost += distance[required[i]][required[j]];
             }
         }
 
@@ -164,9 +166,11 @@ public class SolutionSet implements BranchBound {
                 if (distance[i][j] == Graph.INF) {
                     throw new IllegalArgumentException();
                 }
-                cost += 2*distance[i][j];
+                cost += distance[i][j];
             }
         }
+
+        cost *= 2;
         // TODO: One-of-isms? Required nodes arent articulation.
     }
 
