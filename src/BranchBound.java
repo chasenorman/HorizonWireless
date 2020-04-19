@@ -4,18 +4,18 @@ import java.io.IOException;
 import java.util.*;
 
 public interface BranchBound extends Comparable<BranchBound> {
-
-
     List<BranchBound> branch();
 
     double bound();
 
     boolean isSolution();
 
-    Solution heuristic();
+    default double heuristicCost() {
+        return bound();
+    }
 
     default int compareTo(BranchBound o) {
-        return Double.compare(o.bound(), bound());
+        return Double.compare(heuristicCost(), o.heuristicCost());
     }
 
     public static void solve(Graph G, String output) throws IOException {
@@ -24,6 +24,9 @@ public interface BranchBound extends Comparable<BranchBound> {
         try {
             Solution s = Solution.from(G, output);
             best = s.bound();
+            if (!s.isValid()) {
+                throw new IllegalArgumentException();
+            }
             System.out.println("Loaded solution with bound " + (best/1000));
         } catch (Exception ignored) {
             Solution s = G.mst();
@@ -32,13 +35,16 @@ public interface BranchBound extends Comparable<BranchBound> {
             System.out.println("No loaded solution found. Using MST " + (best/1000));
         }
 
+        //PriorityQueue<BranchBound> todo = new PriorityQueue<>();
         Stack<BranchBound> todo = new Stack<>();
         todo.add(new SolutionSet(G));
 
         while (!todo.isEmpty()) {
+            //BranchBound b = todo.poll();
             BranchBound b = todo.pop();
 
-            if (b.bound() >= best) {
+
+            if (b.bound() > best) {
                 Main.rejections++;
                 continue;
             }
@@ -52,14 +58,16 @@ public interface BranchBound extends Comparable<BranchBound> {
                 for (BranchBound next : b.branch()) {
                     Main.total++;
 
-                    if (next.bound() < best) {
+                    if (next.bound() <= best) {
                         todo.add(next);
                     } else {
                         Main.rejections++;
                     }
 
-                    if (Main.total % 10000 == 5000) {
+                    if (Main.total % 100000 == 0) {
                         System.out.println("rejection rate: " + Main.rejections / (float)Main.total + ", size: " + todo.size() + ", percent: " + Main.in/(float)Main.out);
+                        Main.total = 0;
+                        Main.rejections = 0;
                     }
                 }
             }

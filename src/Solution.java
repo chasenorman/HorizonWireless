@@ -3,7 +3,7 @@ import java.util.*;
 
 public class Solution implements BranchBound {
     HashSet<Integer> vertices;
-    TreeSet<Edge> edges;
+    Collection<Edge> edges;
     Graph G;
     long cost = -1;
 
@@ -15,6 +15,12 @@ public class Solution implements BranchBound {
             vertices.add(e.u);
             vertices.add(e.v);
         }
+    }
+
+    public Solution(Graph G, HashSet<Edge> edges, HashSet<Integer> vertices) {
+        this.G = G;
+        this.edges = edges;
+        this.vertices = vertices;
     }
 
     public static Solution from(Graph G, String file) throws IOException {
@@ -36,18 +42,26 @@ public class Solution implements BranchBound {
         }
         br.close();
         if (!isValid(G, edges)) {
-            System.out.println(edges);
             throw new IOException();
         }
         return new Solution(G, edges);
     }
 
     public boolean isValid() {
+        HashSet<Integer> vertices = new HashSet<>();
+        for (Edge e : edges) {
+            vertices.add(e.u);
+            vertices.add(e.v);
+        }
+        if (!this.vertices.containsAll(vertices) || !vertices.containsAll(this.vertices)) {
+            return false;
+        }
+
         return Solution.isValid(G, edges);
     }
 
-    public static boolean isValid(Graph G, TreeSet<Edge> edges) {
-        if (edges.size() < G.n/2 || edges.size() > G.n-1) {
+    public static boolean isValid(Graph G, Collection<Edge> edges) {
+        if (edges.size() > G.n-1) {
             return false;
         }
 
@@ -76,7 +90,7 @@ public class Solution implements BranchBound {
             u.union(e.u, e.v);
         }
 
-        int test = u.find(edges.first().u);
+        int test = u.find(edges.iterator().next().u);
         for (Edge e : edges) {
             if (u.find(e.u) != test) {
                 return false;
@@ -113,6 +127,7 @@ public class Solution implements BranchBound {
             boolean[] marked = new boolean[G.n];
             DFS(T, vertices.iterator().next(), marked);
         }
+
         return 2*cost/(double)(vertices.size()*(vertices.size() - 1));
     }
 
@@ -135,13 +150,25 @@ public class Solution implements BranchBound {
     }
 
     @Override
-    public Solution heuristic() {
-        return this;
+    public double heuristicCost() {
+        return bound();
     }
 
     public void save(String file) throws IOException {
         BufferedWriter writer = new BufferedWriter( new FileWriter(file));
         writer.write(toString());
         writer.close();
+    }
+
+    public int hashCode() {
+        return edges.hashCode();
+    }
+
+    public boolean equals(Object o) {
+        if (o instanceof Solution) {
+            Solution s = (Solution) o;
+            return s.edges.containsAll(edges) && edges.containsAll(s.edges);
+        }
+        return false;
     }
 }

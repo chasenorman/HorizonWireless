@@ -176,10 +176,8 @@ public class SolutionSet implements BranchBound {
         }
 
 
-        SortedSet<Edge> remaining = remaining();
-        if (!remaining.isEmpty()) {
-            remaining.removeAll(forbidden); // some other conditions may be required here.
-        }
+        SortedSet<Edge> remaining = new TreeSet<>(remaining());
+        remaining.removeAll(forbidden); // some other conditions may be required here.
 
 
         for (Edge e : remaining) {
@@ -194,10 +192,6 @@ public class SolutionSet implements BranchBound {
     }
 
     private boolean isValidSolution() {
-        if (edge.size < G.n/2 || edge.size > G.n-1) {
-            return false;
-        }
-
         HashSet<Integer> vertices = new HashSet<>();
         for (Edge e : edge) {
             vertices.add(e.u);
@@ -217,9 +211,6 @@ public class SolutionSet implements BranchBound {
 
         UnionFind u = new UnionFind(G.n);
         for (Edge e : edge) {
-            if (u.find(e.u) == u.find(e.v)) {
-                return false;
-            }
             u.union(e.u, e.v);
         }
 
@@ -237,11 +228,7 @@ public class SolutionSet implements BranchBound {
         if (edge == Node.NULL) {
             return G.edges;
         }
-        Edge e = G.edges.higher(edge.e);
-        if (e == null) {
-            return Collections.emptySortedSet();
-        }
-        return G.edges.tailSet(e);
+        return G.edges.tailSet(edge.e,false);
     }
 
     public double bound() {
@@ -254,8 +241,8 @@ public class SolutionSet implements BranchBound {
     }
 
     @Override
-    public Solution heuristic() {
-        return null;
+    public double heuristicCost() {
+        return bound();
     }
 
     public String toString() {

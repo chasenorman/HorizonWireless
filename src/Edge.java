@@ -37,4 +37,17 @@ public class Edge implements Comparable<Edge> {
     public Edge standard() {
         return u > v ? reversed() : this;
     }
+
+    public boolean equals(Object o) {
+        if (o instanceof Edge) {
+            Edge e = (Edge)o;
+            return (e.v==v && e.u == u) || (e.v==u && e.u == v);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return u*101 + v;
+    }
 }
