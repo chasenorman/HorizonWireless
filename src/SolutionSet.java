@@ -2,7 +2,7 @@ import java.util.*;
 
 public class SolutionSet implements BranchBound {
     Node<Edge> edges = new Node<>();
-    Node<Edge> skipped = new Node<>(); // there will eventually be duplicates in skipped and cycles.
+    Node<Edge> skipped = new Node<>();
     Node<Integer> vertices = new Node<>();
     Graph G;
     int nextIndex = 0;
@@ -206,7 +206,7 @@ public class SolutionSet implements BranchBound {
     }
 
     private static int selectionOrder(Edge e1, Edge e2) {
-        return (e2.w - e1.w);
+        return Double.compare(e2.score(), e1.score());
     }
 
     public String toString() {

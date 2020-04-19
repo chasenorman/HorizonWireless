@@ -8,7 +8,7 @@ public interface BranchBound {
 
     double size();
 
-    public static void solve(Graph G, String output) throws IOException {
+    static void solve(Graph G, String output) throws IOException {
         double best;
         Solution s;
         try {

@@ -71,6 +71,97 @@ public class Graph {
         edges.add(e);
     }
 
+    private int time;
+
+    // FIXME: We could just use bridges() and then get the nodes which are degree > 1 and have a bridge (?).
+    /** Get all the points that, when removed, would create two disconnected graphs. */
+    public void setArticulationPoints() {
+        int[] oldestDescendant = new int[n];
+        int[] timeVisited = new int[n];
+        articulationHelper(0, -1, timeVisited, oldestDescendant);
+    }
+
+    /** A helper to recurisvely find articulation points.
+     * @param root The node which you are checking if it is an articulation point.
+     * @param timeVisited The time at which eat node is visited.
+     * @param oldestDescendant The (so far known) lowest (earliest) timeVisited of any nodes below root.
+     */
+    private void articulationHelper(int root, int parent, int[] timeVisited, int[] oldestDescendant) {
+        timeVisited[root] = ++time;
+        oldestDescendant[root] = timeVisited[root];
+        int child;
+        for (Edge edge : incident[root]) {
+            child = edge.v;
+            if (child == parent) {
+                continue;
+            }
+            if (timeVisited[child] == 0) {
+                // The child has never been visited, so recurse.
+                articulationHelper(child, root, timeVisited, oldestDescendant);
+
+                if (timeVisited[root] < oldestDescendant[child] && incident[root].size() > 1) {
+                    // A child tree of mine is completely self-contained.
+                    // If I have degree > 1 I'm articulation point.
+                    articulationPoints.add(root);
+                }
+            }
+
+            // Make sure oldestDescendant[root] is accurate
+            oldestDescendant[root] = Math.min(oldestDescendant[root], oldestDescendant[child]);
+        }
+    }
+
+    /** Get all the edges that, when removed, would create two disconnected graphs. */
+    public TreeSet<Edge> bridges() {
+        TreeSet<Edge> bridges = new TreeSet<Edge>();
+        int[] oldestDescendant = new int[n];
+        int[] timeVisited = new int[n];
+        bridgesHelper(0, -1, timeVisited, oldestDescendant, bridges);
+        return bridges;
+    }
+
+    /** A helper to recurisvely find articulation points.
+     * @param root The node which you are checking if any of the edges around it are bridges.
+     * @param timeVisited The time at which eat node is visited.
+     * @param oldestDescendant The (so far known) lowest (earliest) timeVisited of any nodes below root.
+     * @param bridges The collection of edges which will are bridges (to be filled).
+     */
+    private void bridgesHelper(int root, int parent, int[] timeVisited, int[] oldestDescendant, TreeSet<Edge> bridges) {
+        timeVisited[root] = ++time;
+        oldestDescendant[root] = timeVisited[root];
+        int child;
+        for (Edge edge : incident[root]) {
+            child = edge.v;
+            if (child == parent) {
+                continue;
+            }
+            if (timeVisited[child] == 0) {
+                // The child has never been visited, so recurse.
+                bridgesHelper(child, root, timeVisited, oldestDescendant, bridges);
+
+                if (timeVisited[root] < oldestDescendant[child]) {
+                    // A child tree of mine is completely self-contained.
+                    // If I have degree > 1 I'm ab ridge
+                    if (incident[root].size() > 1 && incident[child].size() > 1) {
+                        bridges.add(edge);
+                    }
+                }
+            }
+
+            // Make sure oldestDescendant[root] is accurate
+            oldestDescendant[root] = Math.min(oldestDescendant[root], oldestDescendant[child]);
+        }
+    }
+
+    /** Get the average degree of nodes in the graph. */
+    public float averageDegree() {
+        float sum = 0;
+        for (int node = 0; node < n; node++) {
+            sum += incident[node].size();
+        }
+        return sum / n;
+    }
+
     public String toString() {
         StringBuilder result = new StringBuilder(n + "\n");
         for (Edge e : edges) {
@@ -129,18 +220,6 @@ public class Graph {
         BufferedWriter writer = new BufferedWriter( new FileWriter(file));
         writer.write(toString());
         writer.close();
-    }
-
-    public void setArticulationPoints() {
-        HashSet<Integer> result = new HashSet<Integer>();
-
-        for (int i = 0; i < n; i++) {
-            if (incident[i].size() == 1) {
-                result.add(incident[i].iterator().next().v);
-            }
-        }
-
-        articulationPoints = result;
     }
 
     public Solution shortestPathTree(int v) {
