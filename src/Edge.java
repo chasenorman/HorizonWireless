@@ -13,7 +13,7 @@ public class Edge implements Comparable<Edge> {
 
     public int compareTo(Edge e) {
         if(w != e.w){
-            return e.w - w;
+            return w - e.w;
         } else if (v != e.v) {
             return v - e.v;
         } else {
@@ -49,5 +49,9 @@ public class Edge implements Comparable<Edge> {
     @Override
     public int hashCode() {
         return u*101 + v;
+    }
+
+    public double score() { // lower is better.
+        return w;
     }
 }

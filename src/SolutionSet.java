@@ -1,94 +1,117 @@
 import java.util.*;
 
 public class SolutionSet implements BranchBound {
-    static class Node implements Iterable<Edge> {
-        public static Node NULL = new Node();
-
-        Edge e;
-        Node n;
-        int size = 0;
-
-        public Node(Edge e, Node n) {
-            this.e = e;
-            this.n = n;
-            size = n.size + 1;
-        }
-
-        private Node() {}
-
-        public TreeSet<Edge> edges() {
-            TreeSet<Edge> result = new TreeSet<>();
-            Node n = this;
-            while (n != NULL) {
-                result.add(n.e);
-                n = n.n;
-            }
-            return result;
-        }
-
-        public Iterator<Edge> iterator() {
-            Node t = this;
-            return new Iterator<Edge>() {
-                Node current = t;
-
-                @Override
-                public boolean hasNext() {
-                    return current != NULL;
-                }
-
-                @Override
-                public Edge next() {
-                    Edge result = current.e;
-                    current = current.n;
-                    return result;
-                }
-            };
-        }
-    }
-
+    Node<Edge> edges = new Node<>();
+    Node<Edge> skipped = new Node<>(); // there will eventually be duplicates in skipped and cycles.
+    Node<Integer> vertices = new Node<>();
     Graph G;
-    Node edge = Node.NULL;
-    HashSet<Edge> forbidden;
-    HashSet<Integer> must = new HashSet<>();
-    int cost;
-    int maxsize = 0;
+    int nextIndex = 0;
+    Edge[] sorted;
+    HashSet<Integer> articulationPoints;
+
+    long cost = -1;
+    int maxSize;
+
+    int nextMaxSize = -1;
+
 
     public SolutionSet(Graph G) {
         this.G = G;
-        forbidden = new HashSet<>();
-
-        for(int v = 0; v < G.n; v++) { //possibly min-cuts could be used.
-            if (G.incident[v].size() == 1) {
-                Edge e = G.incident[v].first();
-                must.add(e.v);
-            }
-        }
+        maxSize = G.n; // G is connected.
+        sorted = new Edge[G.edges.size()];
+        G.edges.toArray(sorted);
+        G.setArticulationPoints();
+        articulationPoints = new HashSet<>(G.articulationPoints);
+        Arrays.sort(sorted, SolutionSet::selectionOrder);
     }
 
-    private SolutionSet() { }
+    private SolutionSet(SolutionSet prev, Node<Edge> edges, Node<Edge> skipped, int nextIndex, int maxSize) {
+        this.edges = edges;
+        this.skipped = skipped;
+        vertices = prev.vertices;
+        this.articulationPoints = new HashSet<>(prev.articulationPoints);
 
-    private static SolutionSet next(Graph G, Node edge, HashSet<Integer> prevMust) {
-        SolutionSet s = new SolutionSet();
+        boolean u = false, v = false;
+        for (int i : vertices) {
+            if (i == edges.last.u) {
+                u = true;
+            } else if (i == edges.last.v) {
+                v = true;
+            }
+        }
 
-        s.G = G;
-        s.edge = edge;
+        if (!u) {
+            vertices = new Node<>(edges.last.u, vertices);
+            articulationPoints.remove(edges.last.u);
+        }
+        if (!v) {
+            vertices = new Node<>(edges.last.v, vertices);
+            articulationPoints.remove(edges.last.v);
+        }
 
-        s.must = new HashSet<>(prevMust);
-        s.must.add(edge.e.u);
-        s.must.add(edge.e.v);
+        G = prev.G;
+        sorted = prev.sorted;
 
-        // Floyd-Warshall to find distance array
+        this.nextIndex = nextIndex;
+        this.maxSize = maxSize;
+    }
+
+    public double size() {
+        if (nextIndex > 30) {
+            return 0;
+        }
+        return 1./(1<<nextIndex); // presumes around half of trees will include each particular edge.
+    }
+
+    @Override
+    public List<BranchBound> branch() {
+        List<BranchBound> result = new ArrayList<>();
+
+        Solution solution = new Solution(edges, vertices, G.n);
+        if (solution.verifyPartial(G)) {
+            result.add(solution);
+        }
+
+        UnionFind u = new UnionFind(G.n);
+        for (Edge e : edges) {
+            u.union(e.u, e.v);
+        }
+
+        Node<Edge> nextSkipped = skipped;
+        for (int i = nextIndex; i < sorted.length; i++) {
+            if (u.find(sorted[i].v) != u.find(sorted[i].u) && canSkipTo(i)) {
+                Node<Edge> nextEdges = new Node<>(sorted[i], edges);
+                SolutionSet s = new SolutionSet(this, nextEdges, nextSkipped, i + 1, nextMaxSize);
+                result.add(s);
+                nextSkipped = new Node<>(sorted[i], nextSkipped);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public double bound() {
+        if (cost == -1) {
+            computeCost();
+        }
+        return cost/(double)(maxSize*(maxSize-1));
+    }
+
+    public void computeCost() {
+        cost = 0;
+
         int[][] distance = new int[G.n][G.n];
         for (int x = 0; x < G.n; x++) {
             for (int y = 0; y < G.n; y++) {
                 distance[x][y] = x == y ? 0 : Graph.INF;
             }
         }
-        for (Edge e : edge) {
+        for (Edge e : edges) {
             distance[e.u][e.v] = e.w;
             distance[e.v][e.u] = e.w;
         }
-        for (Edge e : s.remaining()) {
+        for (int i = nextIndex; i < sorted.length; i++) {
+            Edge e = sorted[i];
             distance[e.u][e.v] = e.w;
             distance[e.v][e.u] = e.w;
         }
@@ -116,92 +139,62 @@ public class SolutionSet implements BranchBound {
             }
         }
 
-        Object[] arr = s.must.toArray();
-        for (int i = 0; i < arr.length; i++) { // this is inefficient.
-            for (int j = i+1; j < arr.length; j++) {
-                if (distance[(Integer)arr[i]][(Integer)arr[j]] == Graph.INF) {
-                    return null;
+        for (Node<Integer> i = vertices; i.size != 0; i = i.prev) {
+            for (Node<Integer> j = i.prev; j.size != 0; j = j.prev) {
+                if (distance[i.last][j.last] == Graph.INF) {
+                    throw new IllegalArgumentException();
                 }
-                s.cost += 2*distance[(Integer)arr[i]][(Integer)arr[j]];
+                cost += 2*distance[i.last][j.last];
             }
         }
 
-        s.forbidden = new HashSet<>();
+        Integer[] required = articulationPoints.toArray(new Integer[0]);
 
+        for (int i = 0; i < required.length; i++) {
+            for (int j = i+1; j < required.length; j++) {
+                if (distance[required[i]][required[j]] == Graph.INF) {
+                    throw new IllegalArgumentException();
+                }
+                cost += 2*distance[required[i]][required[j]];
+            }
+        }
+
+        for (int i : vertices) {
+            for (int j : required) {
+                if (distance[i][j] == Graph.INF) {
+                    throw new IllegalArgumentException();
+                }
+                cost += 2*distance[i][j];
+            }
+        }
+        // TODO: One-of-isms? Required nodes arent articulation.
+    }
+
+    private boolean canSkipTo(int index) {
         UnionFind u = new UnionFind(G.n);
-        for (Edge e : edge) {
-            assert u.find(e.u) != u.find(e.v);
+
+        for (Edge e : edges) {
             u.union(e.u, e.v);
         }
-        for (Edge e : G.edges) {
-            if (u.find(e.u) == u.find(e.v)) {
-                s.forbidden.add(e);
+        for (int i = index; i < sorted.length; i++) {
+            u.union(sorted[i].u, sorted[i].v);
+        }
+
+        int cc = u.find(sorted[index].v);
+
+        for (int i : vertices) {
+            if (u.find(i) != cc) {
+                return false;
             }
         }
 
-        SortedSet<Edge> f = G.edges.headSet(edge.e);
-        s.forbidden.addAll(f);
-        for (Edge e : edge) {
-            s.forbidden.remove(e);
-        }
-
-        int v = s.must.iterator().next();
-        HashSet<Integer> possible = new HashSet<>();
-        for (int i = 0; i < G.n; i++) {
-            if (distance[v][i] != Graph.INF) {
-                possible.add(i);
-            }
-        }
-        s.maxsize = possible.size();
-
-        Outer: for(int i = 0; i < G.n; i++) {
-            if (!possible.contains(i)) {
+        nextMaxSize = 0;
+        Outer: for (int i = 0; i < G.n; i++) {
+            if (u.find(i) == cc) {
+                nextMaxSize++;
+            } else {
                 for (Edge e : G.incident[i]) {
-                    if (possible.contains(e.v)) {
-                        continue Outer;
-                    }
-                }
-                return null;
-            }
-        }
-
-        return s;
-    }
-
-    @Override
-    public List<BranchBound> branch() {
-        ArrayList<BranchBound> result = new ArrayList<>();
-        if (isValidSolution()) {
-            result.add(new Solution(G, edge.edges()));
-        }
-
-
-        SortedSet<Edge> remaining = new TreeSet<>(remaining());
-        remaining.removeAll(forbidden); // some other conditions may be required here.
-
-
-        for (Edge e : remaining) {
-            Node n = new Node(e, edge);
-
-            SolutionSet s = next(G, n, must);
-            if (s != null) {
-                result.add(s);
-            }
-        }
-        return result;
-    }
-
-    private boolean isValidSolution() {
-        HashSet<Integer> vertices = new HashSet<>();
-        for (Edge e : edge) {
-            vertices.add(e.u);
-            vertices.add(e.v);
-        }
-
-        Outer: for(int i = 0; i < G.n; i++) {
-            if (!vertices.contains(i)) {
-                for (Edge e : G.incident[i]) {
-                    if (vertices.contains(e.v)) {
+                    if (u.find(e.v) == cc) {
                         continue Outer;
                     }
                 }
@@ -209,43 +202,14 @@ public class SolutionSet implements BranchBound {
             }
         }
 
-        UnionFind u = new UnionFind(G.n);
-        for (Edge e : edge) {
-            u.union(e.u, e.v);
-        }
-
-        int test = u.find(edge.e.u);
-        for (Edge e : edge) {
-            if (u.find(e.u) != test) {
-                return false;
-            }
-        }
         return true;
     }
 
-
-    public SortedSet<Edge> remaining() {
-        if (edge == Node.NULL) {
-            return G.edges;
-        }
-        return G.edges.tailSet(edge.e,false);
-    }
-
-    public double bound() {
-        return cost/(double)(maxsize * (maxsize-1));
-    }
-
-    @Override
-    public boolean isSolution() {
-        return false;
-    }
-
-    @Override
-    public double heuristicCost() {
-        return bound();
+    private static int selectionOrder(Edge e1, Edge e2) {
+        return (e2.w - e1.w);
     }
 
     public String toString() {
-        return edge.edges().toString();
+        return edges.toString();
     }
 }

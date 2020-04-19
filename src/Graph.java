@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.TreeSet;
@@ -9,9 +10,9 @@ public class Graph {
     public static final int INF = 100000000;
 
     // Adjacency List
-    public final TreeSet<Edge>[] incident;
+    public final HashSet<Edge>[] incident;
 
-    public final TreeSet<Edge>[] incidentStandard;
+    public final HashSet<Edge>[] incidentStandard;
 
     // Adjacency Matrix
     public final int[][] adjacency;
@@ -23,11 +24,12 @@ public class Graph {
 
     public Graph(int n) {
         this.n = n;
-        incident = new TreeSet[n];
-        incidentStandard = new TreeSet[n];
+        incident = new HashSet[n];
+        incidentStandard = new HashSet[n];
+        articulationPoints = new HashSet<>();
         for (int i = 0; i < n; i++){
-            incident[i] = new TreeSet<>();
-            incidentStandard[i] = new TreeSet<>();
+            incident[i] = new HashSet<>();
+            incidentStandard[i] = new HashSet<>();
         }
         adjacency = new int[n][n];
         for (int x = 0; x < n; x++) {
@@ -36,6 +38,8 @@ public class Graph {
             }
         }
     }
+
+    public HashSet<Integer> articulationPoints;
 
     public static Graph from(String s) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(new File(s)));
@@ -101,120 +105,24 @@ public class Graph {
     }
 
     public Solution mst() {
-        TreeSet<Edge> mst = new TreeSet<>();
+        Node<Edge> mst = new Node<>();
         UnionFind u = new UnionFind(n);
-        for (Edge e : edges.descendingSet()) { // this depends on ordering.
+        for (Edge e : edges) { // this depends on ordering.
             if (u.find(e.u) != u.find(e.v)) {
-                mst.add(e);
+                mst = new Node<>(e, mst);
                 u.union(e.u, e.v);
             }
-            if (mst.size() == n - 1) {
+            if (mst.size == n - 1) {
                 break;
             }
         }
-        return new Solution(this, mst);
-    }
 
-    public Solution cantor() {
-        TreeSet<Edge> T = new TreeSet<>();
-
-        int[] d = new int[n];
-        int[] s = new int[n];
-        int[] m = new int[n];
-        int sumWeights = 0;
-
-        for (Edge e : edges) {
-            d[e.u]++; d[e.v]++;
-            s[e.u]+=e.w; s[e.v]+=e.w;
-            m[e.u] = Math.max(m[e.u], e.w);
-            m[e.v] = Math.max(m[e.v], e.w);
-            sumWeights += e.w;
+        Node<Integer> vertices = new Node<>();
+        for (int i = 0; i < n; i++){
+            vertices = new Node<>(i, vertices);
         }
 
-        double mean = sumWeights/(double)edges.size();
-        double sum = 0;
-        for (Edge e : edges) {
-            sum += (mean - e.w)*(mean - e.w);
-        }
-        double stdDev = Math.sqrt(sum/(edges.size()-1));
-        double ratio = stdDev/mean;
-
-        double C4, C5;
-
-        if (ratio < 0.4+0.005*(n-10)) {
-            C4 = 1; C5 = 1;
-        } else {
-            C4 = 0.9; C5 = 0.1;
-        }
-
-        int[] w = new int[n];
-        Color[] color = new Color[n];
-        double[] sp = new double[n];
-        int f = 0;
-        double sp_max = 0;
-
-        for (int v = 0; v < n; v++) {
-            w[v] = INF;
-            color[v] = Color.WHITE;
-            sp[v] = 0.2*d[v] + 0.6*(d[v]/(double)s[v]) + (0.2/m[v]);
-            if (sp[v] > sp_max) {
-                sp_max = sp[v];
-                f = v;
-            }
-        }
-
-        int[] cf = new int[n];
-        int[] p = new int[n];
-        int[] pd = new int[n];
-        int[] ps = new int[n];
-
-        w[f] = 0; cf[f] = 0; p[f] = f; pd[f] = 0; ps[f] = 1;
-        color[f] = Color.GREY;
-        HashSet<Integer> L = new HashSet<>();
-        L.add(f);
-
-        double[] wd = new double[n];
-        double[] jsp = new double[n];
-
-        int spanned_vertices = 0;
-        while (spanned_vertices < n) {
-            int u = -1;
-            for (int i : L) {
-                if (u == -1 || wd[i] < wd[u]) {
-                    u = i;
-                } else if(wd[i] == wd[u] && jsp[i] >= jsp[u]) {
-                    u = i;
-                }
-            }
-            L.remove(u);
-
-            for (Edge e : incident[u]) {
-                if (color[e.v] == Color.BLACK) {
-                    continue;
-                }
-
-                double wdt = C4*e.w + C5*(cf[u] + e.w); double jspt = (d[e.v] + d[u]) + ((d[e.v] + d[u])/(double)(s[e.v] + s[u]));
-
-                if (wdt < wd[e.v] || (wdt == wd[e.v] && jspt >= jsp[e.v]) || (wd[e.v] == 0 && jsp[e.v] == 0)) {
-                    wd[e.v] = wdt;
-                    jsp[e.v] = jspt;
-                    p[e.v] = u;
-                    L.add(e.v);
-                    color[e.v] = Color.GREY;
-                }
-            }
-            color[u] = Color.BLACK;
-            spanned_vertices++;
-            if (u != p[u]) {
-                T.add(new Edge(u, p[u], adjacency[u][p[u]]).standard());
-            }
-        }
-
-        return new Solution(this, T);
-    }
-
-    enum Color {
-        WHITE, GREY, BLACK;
+        return new Solution(mst, vertices, n);
     }
 
     public void save(String file) throws IOException {
@@ -223,14 +131,63 @@ public class Graph {
         writer.close();
     }
 
-    public HashSet<Integer> requiredEdges() {
-        HashSet<Integer> result = new HashSet<>();
-        for(int v = 0; v < n; v++) { //possibly min-cuts could be used.
-            if (incident[v].size() == 1) {
-                Edge e = incident[v].first();
-                result.add(e.v);
+    public void setArticulationPoints() {
+        HashSet<Integer> result = new HashSet<Integer>();
+
+        for (int i = 0; i < n; i++) {
+            if (incident[i].size() == 1) {
+                result.add(incident[i].iterator().next().v);
             }
         }
+
+        articulationPoints = result;
+    }
+
+    public Solution shortestPathTree(int v) {
+        int[] prev = new int[n];
+        int[] dist = new int[n];
+
+        PriorityQueue<Integer> q = new PriorityQueue<>(Comparator.comparingInt(o -> dist[o]));
+
+        for (int i = 0; i < n; i++) {
+            if (i != v) {
+                dist[i] = INF;
+            }
+            q.add(i);
+        }
+
+        while (!q.isEmpty()) {
+            int u = q.poll();
+            for (Edge e : incident[u]) {
+                int temp = dist[u] + e.w;
+                if (temp < dist[e.v] || dist[e.v] == INF) {
+                    dist[e.v] = temp;
+                    prev[e.v] = u;
+                    q.remove(e.v);
+                    q.add(e.v);
+                }
+            }
+        }
+
+        Node<Edge> edges = new Node<>();
+
+        for (int i = 0; i < n; i++) {
+            if (i != v) {
+                edges = new Node<>(new Edge(i, prev[i], adjacency[i][prev[i]]).standard(), edges);
+            }
+        }
+
+        Node<Integer> vertices = new Node<>();
+        for (int i = 0; i < n; i++){
+            vertices = new Node<>(i, vertices);
+        }
+
+        Solution result = new Solution(edges, vertices, n);
+
+        if (!result.verify(this)) {
+            throw new IllegalArgumentException();
+        }
+
         return result;
     }
 
@@ -256,12 +213,29 @@ public class Graph {
                     if(via < distance[i][j]) {
                         distance[i][j] = via;
                         distance[j][i] = via;
-                        //prev[i][j] = k;
                     }
                 }
             }
         }
 
         return distance;
+    }
+
+
+    public int center() {
+        int[][] distance = distance();
+        int[] maximum = new int[n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                maximum[i] = Math.max(maximum[i], distance[i][j]);
+            }
+        }
+        int minIndex = 0;
+        for (int i = 1; i < n; i++) {
+            if (maximum[minIndex] > maximum[i]) {
+                minIndex = i;
+            }
+        }
+        return minIndex;
     }
 }

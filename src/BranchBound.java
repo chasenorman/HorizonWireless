@@ -1,76 +1,61 @@
-import javafx.scene.layout.Priority;
-
 import java.io.IOException;
 import java.util.*;
 
-public interface BranchBound extends Comparable<BranchBound> {
+public interface BranchBound {
     List<BranchBound> branch();
 
     double bound();
 
-    boolean isSolution();
-
-    default double heuristicCost() {
-        return bound();
-    }
-
-    default int compareTo(BranchBound o) {
-        return Double.compare(heuristicCost(), o.heuristicCost());
-    }
+    double size();
 
     public static void solve(Graph G, String output) throws IOException {
-        double best = Double.POSITIVE_INFINITY;
-
+        double best;
+        Solution s;
         try {
-            Solution s = Solution.from(G, output);
-            best = s.bound();
-            if (!s.isValid()) {
-                throw new IllegalArgumentException();
-            }
-            System.out.println("Loaded solution with bound " + (best/1000));
-        } catch (Exception ignored) {
-            Solution s = G.mst();
-            s.save(output);
-            best = s.bound();
-            System.out.println("No loaded solution found. Using MST " + (best/1000));
+            s = Solution.from(G, output);
+        } catch (Exception e) {
+            s = null;
         }
 
-        //PriorityQueue<BranchBound> todo = new PriorityQueue<>();
-        Stack<BranchBound> todo = new Stack<>();
-        todo.add(new SolutionSet3(G));
+        if (s == null || !s.verify(G)) {
+            s = G.shortestPathTree(G.center());
+            best = s.bound();
+            System.out.println("No loaded solution found. Using Shortest Path Tree " + (best/1000));
+            s.save(output);
+        } else {
+            best = s.bound();
+            System.out.println("Loaded solution with bound " + (best / 1000));
+        }
 
+        Stack<BranchBound> todo = new Stack<>();
+        todo.add(new SolutionSet(G));
+
+        int iterations = 1;
         while (!todo.isEmpty()) {
-            //BranchBound b = todo.poll();
             BranchBound b = todo.pop();
 
-
-            if (b.bound() > best) {
-                Main.rejections++;
-                continue;
+            if (iterations % 100000 == 0) {
+                double total = 1;
+                for (BranchBound i : todo) {
+                    total -= i.size();
+                }
+                System.out.println("percent: " + total);
             }
 
-            if (b.isSolution()) {
-                ((Solution3) b).save(output);
+            if (b instanceof Solution) {
+                ((Solution) b).save(output);
                 best = b.bound();
                 System.out.println(best/1000);
             }
             else {
                 for (BranchBound next : b.branch()) {
-                    Main.total++;
-
                     if (next.bound() <= best) {
                         todo.add(next);
-                    } else {
-                        Main.rejections++;
-                    }
-
-                    if (Main.total % 100000 == 0) {
-                        System.out.println("rejection rate: " + Main.rejections / (float)Main.total + ", size: " + todo.size() + ", percent: " + Main.in/(float)Main.out);
-                        Main.total = 0;
-                        Main.rejections = 0;
                     }
                 }
             }
+
+            iterations++;
         }
     }
 }

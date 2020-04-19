@@ -1,6 +1,6 @@
 public class UnionFind {
-    int[] parent;
-    int[] rank;
+    private int[] parent;
+    private int[] rank;
 
     UnionFind(int n) {
         parent = new int[n];
