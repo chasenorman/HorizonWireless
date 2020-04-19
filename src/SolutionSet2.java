@@ -8,10 +8,9 @@ public class SolutionSet2 implements BranchBound {
     TreeSet<Edge> adjacent; // viable edges for next iteration
     HashSet<Integer> vertices;
     HashSet<Edge> requiredEdges;
-    HashSet<Integer> requiredVertices;
     HashSet<Edge> possibleEdges;
     public static int[][] distance;
-    long cost;
+    long cost = -1;
     long heuristicCost = -1;
     int maxSize;
 
@@ -26,7 +25,6 @@ public class SolutionSet2 implements BranchBound {
         this.skipped = new HashSet<>(skipped);
 
         requiredEdgesInSubgraph();
-        requiredNodesInSubgraph();
         possibleEdgesInSubgraph();
 
         Object[] s = skippable(skipped);
@@ -36,7 +34,6 @@ public class SolutionSet2 implements BranchBound {
 
         this.maxSize = (Integer)s[1];
         distance = G.distance();
-        computeCost();
     }
 
     private SolutionSet2(SolutionSet2 prev, Collection<Edge> skipped, Edge next, int maxSize) {
@@ -72,18 +69,14 @@ public class SolutionSet2 implements BranchBound {
         adjacent.remove(next);
 
         requiredEdgesInSubgraph();
-        requiredNodesInSubgraph();
         possibleEdgesInSubgraph();
-        computeCost();
     }
 
-    public void requiredNodesInSubgraph() {
-        requiredVertices = new HashSet<>(vertices);
+    public HashSet<Integer> requiredNodesInSubgraph() {
+        HashSet<Integer> requiredVertices = new HashSet<>(vertices);
 
         for(int i = 0; i < G.n; i++) {
             HashSet<Edge> incident = new HashSet<>(G.incidentStandard[i]);
-            incident.removeAll(cycles);
-            incident.removeAll(skipped);
             if (incident.size() == 1) {
                 Edge e = incident.iterator().next();
                 if (e.v == i) {
@@ -93,6 +86,8 @@ public class SolutionSet2 implements BranchBound {
                 }
             }
         }
+
+        return requiredVertices;
     }
 
     public void requiredEdgesInSubgraph() {
@@ -101,10 +96,8 @@ public class SolutionSet2 implements BranchBound {
 
     @Override
     public List<BranchBound> branch() {
-        Main.start();
         for (Edge e : requiredEdges) {
             if (adjacent.contains(e)) {
-                Main.end();
                 return new SolutionSet2(this, Collections.emptySet(), e, maxSize).branch();
             }
         }
@@ -123,12 +116,14 @@ public class SolutionSet2 implements BranchBound {
             result.add(new SolutionSet2(this, skipped, e, (Integer)s[1]));
             skipped.add(e);
         }
-        Main.end();
         return result;
     }
 
     @Override
     public double bound() {
+        if (cost == -1) {
+            computeCost();
+        }
         return cost/((double)maxSize*(maxSize-1));
     }
 
@@ -227,6 +222,7 @@ public class SolutionSet2 implements BranchBound {
     }
 
     private void computeCost() {
+        cost = 0;
         Graph T = new Graph(G.n); // inefficient graph creation.
         for (Edge e : edges) {
             T.add(e.u, e.v, e.w);
@@ -234,19 +230,6 @@ public class SolutionSet2 implements BranchBound {
         boolean[] marked = new boolean[G.n];
         DFS(T, vertices.iterator().next(), marked);
         cost *= 2;
-
-        HashSet<Integer> other = new HashSet<>(requiredVertices);
-        other.removeAll(vertices);
-        for (int i : vertices) {
-            for (int j : other) {
-                cost += 2*distance[i][j];
-            }
-        }
-        for (int i : other) {
-            for (int j : other) {
-                cost += distance[i][j];
-            }
-        }
     }
 
     private int DFS(Graph T, int v, boolean[] marked) {

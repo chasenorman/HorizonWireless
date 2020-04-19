@@ -138,49 +138,7 @@ public class SolutionSet3 implements BranchBound {
                 cost += 2*distance[i.last][j.last];
             }
         }
-
-        Integer[] required = articulationPointsMinusVertices();
-        for (int i = 0; i < required.length; i++) {
-            for (int j = i+1; j < required.length; j++) {
-                if (distance[required[i]][required[j]] == Graph.INF) {
-                    throw new IllegalArgumentException();
-                }
-                cost += 2*distance[required[i]][required[j]];
-            }
-        }
-
-        for (int i : vertices) {
-            for (int j : required) {
-                if (distance[i][j] == Graph.INF) {
-                    throw new IllegalArgumentException();
-                }
-                cost += 2*distance[i][j];
-            }
-        }
-        // TODO: One-of-isms?
-    }
-
-    public Integer[] articulationPointsMinusVertices() {
-        HashSet<Integer> result = new HashSet<Integer>();
-
-        int[] d = new int[G.n];
-        for (Edge e : edges) {
-            d[e.u]++; d[e.v]++;
-        }
-
-        for (Edge e : edges) {
-            if (d[e.u] == 1) {
-                result.add(e.v);
-            } else if (d[e.v] == 1) {
-                result.add(e.u);
-            }
-        }
-
-        for (int i : vertices) {
-            result.remove(i);
-        }
-
-        return result.toArray(new Integer[0]);
+        // TODO: One-of-isms? Articulation Points?
     }
 
     @Override

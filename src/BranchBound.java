@@ -37,7 +37,7 @@ public interface BranchBound extends Comparable<BranchBound> {
 
         //PriorityQueue<BranchBound> todo = new PriorityQueue<>();
         Stack<BranchBound> todo = new Stack<>();
-        todo.add(new SolutionSet(G));
+        todo.add(new SolutionSet3(G));
 
         while (!todo.isEmpty()) {
             //BranchBound b = todo.poll();
@@ -50,7 +50,7 @@ public interface BranchBound extends Comparable<BranchBound> {
             }
 
             if (b.isSolution()) {
-                ((Solution) b).save(output);
+                ((Solution3) b).save(output);
                 best = b.bound();
                 System.out.println(best/1000);
             }

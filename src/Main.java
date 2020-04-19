@@ -12,13 +12,14 @@ public class Main {
     static long t = System.currentTimeMillis();
 
     public static void main(String[] args) throws IOException {
-        //Graph.random(20, 1.5).save("src/graph.txt");
+        Graph.random(40, 1.5).save("src/graph.txt");
         BranchBound.solve(Graph.from("src/graph.txt"), "src/output.txt");
         //Graph G = Graph.from("src/graph.txt");
-        //SolutionSet3 s = new SolutionSet3(G);
-        //System.out.println(s.branch().get(1).branch().get(6).branch().get(0).branch().get(0).branch().get(0).branch().get(0).branch().get(0).branch().get(1).branch().get(0).branch().get(2).branch().get(0).branch().get(0).branch().get(0).bound());
-        //System.out.println(s.branch().get(1).branch().get(6).branch().get(0).branch().get(0).branch().get(0).branch().get(0).branch().get(0).branch().get(1).branch().get(0).branch().get(2).branch().get(0).branch().get(0).bound());
-        //System.out.println(s.branch().get(1).branch().get(6).branch().get(0).branch().get(0).branch().get(0).branch().get(0).branch().get(0).branch().get(1).branch().get(0).branch().get(2).branch().get(0).bound());
+        //SolutionSet2 s = new SolutionSet2(G, G.requiredEdges().iterator().next(), Collections.emptySet());
+        //System.out.println(s.branch().get(0).branch().get(4).branch().get(2).branch().get(1).branch().get(3).branch().get(0).bound());
+        //System.out.println(s.branch().get(0).branch().get(4).branch().get(2).branch().get(1).branch().get(3).branch().get(0).bound());
+        //System.out.println(s.branch().get(0).branch().get(4).branch().get(2).branch().get(1).branch().get(3).bound());
+        System.out.println(System.currentTimeMillis()-t);
     }
 
 
