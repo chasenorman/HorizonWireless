@@ -15,6 +15,10 @@ public class SolutionSet implements BranchBound {
     int nextMaxSize = -1;
     HashSet<Integer> nextRequired;
 
+    Node<Edge> heuristic = new Node<>();
+
+    int center = 0;
+
 
     public SolutionSet(Graph G) {
         this.G = G;
@@ -23,6 +27,7 @@ public class SolutionSet implements BranchBound {
         G.edges.toArray(sorted);
         G.setArticulationPoints();
         required = new HashSet<>(G.articulationPoints);
+        center = G.center();
         Arrays.sort(sorted, SolutionSet::selectionOrder);
     }
 
@@ -98,10 +103,18 @@ public class SolutionSet implements BranchBound {
         return cost/(double)(maxSize*(maxSize-1));
     }
 
+    public Solution heuristic() {
+        if (cost == -1) {
+            computeCost();
+        }
+        return new Solution(heuristic, G.n);
+    }
+
     public void computeCost() {
         cost = 0;
 
         int[][] distance = new int[G.n][G.n];
+        int[][] prev = new int[G.n][G.n];
         for (int x = 0; x < G.n; x++) {
             for (int y = 0; y < G.n; y++) {
                 distance[x][y] = x == y ? 0 : Graph.INF;
@@ -134,7 +147,8 @@ public class SolutionSet implements BranchBound {
                     if(via < distance[i][j]) {
                         distance[i][j] = via;
                         distance[j][i] = via;
-                        //prev[i][j] = k;
+                        prev[i][j] = k;  // i < j
+                        //prev[j][i] = k;
                     }
                 }
             }
@@ -142,17 +156,41 @@ public class SolutionSet implements BranchBound {
 
         Integer[] required = this.required.toArray(new Integer[0]);
 
+        int[] longest = new int[G.n];
+
         for (int i = 0; i < required.length; i++) {
             for (int j = i+1; j < required.length; j++) {
                 if (distance[required[i]][required[j]] == Graph.INF) {
                     throw new IllegalArgumentException();
                 }
+                if (distance[required[i]][required[j]] > longest[required[i]]) {
+                    longest[required[i]] = distance[required[i]][required[j]];
+                }
+                if (distance[required[i]][required[j]] > longest[required[j]]) {
+                    longest[required[j]] = distance[required[i]][required[j]];
+                }
+
                 cost += distance[required[i]][required[j]];
             }
         }
-
         cost *= 2;
-        // TODO: One-of-isms?
+
+        if (required.length != 0) {
+            center = required[0];
+            for (int r : required) {
+                if(longest[r] < longest[center]) {
+                    center = r;
+                }
+            }
+        }
+
+        for (int i = 0; i < G.n; i++) {
+            if (i != center && distance[center][i] != Graph.INF) {
+                int small = Math.min(i, center);
+                int large = Math.max(i, center);
+                heuristic = new Node<>(new Edge(large, prev[small][large], G.adjacency[large][prev[small][large]]).standard(), heuristic);
+            }
+        }
     }
 
     private boolean canSkipTo(int index) {

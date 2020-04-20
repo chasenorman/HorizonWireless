@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 public class Solution implements BranchBound {
@@ -11,6 +12,19 @@ public class Solution implements BranchBound {
     public Solution(Node<Edge> e, Node<Integer> v, int n) {
         this.edges = e;
         this.vertices = v;
+        this.n = n;
+    }
+
+    public Solution(Node<Edge> edges, int n) {
+        this.edges = edges;
+        HashSet<Integer> v = new HashSet<>();
+        for (Edge e : edges) {
+            v.add(e.u); v.add(e.v);
+        }
+        vertices = new Node<>();
+        for (int i : v) {
+            vertices = new Node<>(i, vertices);
+        }
         this.n = n;
     }
 
@@ -166,5 +180,9 @@ public class Solution implements BranchBound {
             }
         }
         return sum;
+    }
+
+    public Solution heuristic() {
+        return this;
     }
 }

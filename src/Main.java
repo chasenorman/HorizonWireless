@@ -9,10 +9,16 @@ public class Main {
     public static final String INPUT_DIR = "input/";
     public static final String OUTPUT_DIR = "output/";
 
+    public static final String graph = "input/graph.in";
+    public static final String solution = "output/graph.out";
+
 
     public static void main(String[] args) throws IOException {
-        //Graph.random(20, 2).save("input/50.in");
-        run();
+        //Graph.random(20, 2).save(graph);
+        Graph G = Graph.from(graph);
+        SolutionSet s = new SolutionSet(G);
+        System.out.println(s.heuristic());
+        //run();
     }
 
     public static void run() throws IOException {
