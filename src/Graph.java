@@ -12,8 +12,6 @@ public class Graph {
     // Adjacency List
     public final HashSet<Edge>[] incident;
 
-    public final HashSet<Edge>[] incidentStandard;
-
     // Adjacency Matrix
     public final int[][] adjacency;
 
@@ -25,11 +23,9 @@ public class Graph {
     public Graph(int n) {
         this.n = n;
         incident = new HashSet[n];
-        incidentStandard = new HashSet[n];
         articulationPoints = new HashSet<>();
         for (int i = 0; i < n; i++){
             incident[i] = new HashSet<>();
-            incidentStandard[i] = new HashSet<>();
         }
         adjacency = new int[n][n];
         for (int x = 0; x < n; x++) {
@@ -64,8 +60,6 @@ public class Graph {
         incident[u].add(e);
         incident[v].add(e.reversed());
         e = e.standard();
-        incidentStandard[u].add(e);
-        incidentStandard[v].add(e);
         adjacency[u][v] = w;
         adjacency[v][u] = w;
         edges.add(e);

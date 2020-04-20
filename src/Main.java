@@ -1,14 +1,25 @@
 import java.io.IOException;
+import java.io.File;
 
 public class Main {
     public static long start = System.currentTimeMillis();
     public static long temp;
     public static long inside = 0;
 
+    public static final String INPUT_DIR = "input/";
+    public static final String OUTPUT_DIR = "output/";
+
 
     public static void main(String[] args) throws IOException {
-        //Graph.random(20, 2).save("src/graph.txt");
-        BranchBound.solve(Graph.from("src/graph.txt"), "src/output.txt");
+        //Graph.random(20, 2).save("input/50.in");
+        run();
+    }
+
+    public static void run() throws IOException {
+        for (String file : new File(INPUT_DIR).list()) {
+            String output = file.replace(".in", ".out");
+            new Solver(INPUT_DIR + file, OUTPUT_DIR + output).start();
+        }
     }
 
     public static void start() {

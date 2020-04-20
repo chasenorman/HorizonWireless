@@ -7,12 +7,13 @@ public class SolutionSet implements BranchBound {
     Graph G;
     int nextIndex = 0;
     Edge[] sorted;
-    HashSet<Integer> articulationPoints;
+    HashSet<Integer> required;
 
     long cost = -1;
     int maxSize;
 
     int nextMaxSize = -1;
+    HashSet<Integer> nextRequired;
 
 
     public SolutionSet(Graph G) {
@@ -21,15 +22,15 @@ public class SolutionSet implements BranchBound {
         sorted = new Edge[G.edges.size()];
         G.edges.toArray(sorted);
         G.setArticulationPoints();
-        articulationPoints = new HashSet<>(G.articulationPoints);
+        required = new HashSet<>(G.articulationPoints);
         Arrays.sort(sorted, SolutionSet::selectionOrder);
     }
 
-    private SolutionSet(SolutionSet prev, Node<Edge> edges, Node<Edge> skipped, int nextIndex, int maxSize) {
+    private SolutionSet(SolutionSet prev, Node<Edge> edges, Node<Edge> skipped, int nextIndex, int maxSize, HashSet<Integer> required) {
         this.edges = edges;
         this.skipped = skipped;
         vertices = prev.vertices;
-        this.articulationPoints = new HashSet<>(prev.articulationPoints);
+        this.required = required;
 
         boolean u = false, v = false;
         for (int i : vertices) {
@@ -42,11 +43,11 @@ public class SolutionSet implements BranchBound {
 
         if (!u) {
             vertices = new Node<>(edges.last.u, vertices);
-            articulationPoints.remove(edges.last.u);
+            //articulationPoints.remove(edges.last.u);
         }
         if (!v) {
             vertices = new Node<>(edges.last.v, vertices);
-            articulationPoints.remove(edges.last.v);
+            //articulationPoints.remove(edges.last.v);
         }
 
         G = prev.G;
@@ -81,7 +82,7 @@ public class SolutionSet implements BranchBound {
         for (int i = nextIndex; i < sorted.length; i++) {
             if (u.find(sorted[i].v) != u.find(sorted[i].u) && canSkipTo(i)) {
                 Node<Edge> nextEdges = new Node<>(sorted[i], edges);
-                SolutionSet s = new SolutionSet(this, nextEdges, nextSkipped, i + 1, nextMaxSize);
+                SolutionSet s = new SolutionSet(this, nextEdges, nextSkipped, i + 1, nextMaxSize, nextRequired);
                 result.add(s);
                 nextSkipped = new Node<>(sorted[i], nextSkipped);
             }
@@ -92,9 +93,7 @@ public class SolutionSet implements BranchBound {
     @Override
     public double bound() {
         if (cost == -1) {
-            Main.start();
             computeCost();
-            Main.stop();
         }
         return cost/(double)(maxSize*(maxSize-1));
     }
@@ -141,16 +140,7 @@ public class SolutionSet implements BranchBound {
             }
         }
 
-        for (Node<Integer> i = vertices; i.size != 0; i = i.prev) {
-            for (Node<Integer> j = i.prev; j.size != 0; j = j.prev) {
-                if (distance[i.last][j.last] == Graph.INF) {
-                    throw new IllegalArgumentException();
-                }
-                cost += distance[i.last][j.last];
-            }
-        }
-
-        Integer[] required = articulationPoints.toArray(new Integer[0]);
+        Integer[] required = this.required.toArray(new Integer[0]);
 
         for (int i = 0; i < required.length; i++) {
             for (int j = i+1; j < required.length; j++) {
@@ -161,17 +151,8 @@ public class SolutionSet implements BranchBound {
             }
         }
 
-        for (int i : vertices) {
-            for (int j : required) {
-                if (distance[i][j] == Graph.INF) {
-                    throw new IllegalArgumentException();
-                }
-                cost += distance[i][j];
-            }
-        }
-
         cost *= 2;
-        // TODO: One-of-isms? Required nodes arent articulation.
+        // TODO: One-of-isms?
     }
 
     private boolean canSkipTo(int index) {
@@ -193,17 +174,32 @@ public class SolutionSet implements BranchBound {
         }
 
         nextMaxSize = 0;
+        nextRequired = new HashSet<>();
         Outer: for (int i = 0; i < G.n; i++) {
-            if (u.find(i) == cc) {
+            if (u.find(i) == cc) { // i is plausible
                 nextMaxSize++;
             } else {
+                int found = 0;
+                int add = 0;
                 for (Edge e : G.incident[i]) {
                     if (u.find(e.v) == cc) {
-                        continue Outer;
+                        if (found == 1) {
+                            continue Outer;
+                        }
+                        add = e.v;
+                        found++;
                     }
+                }
+                if (found == 1) {
+                    nextRequired.add(add); // add must be in the final graph.
+                    continue;
                 }
                 return false;
             }
+        }
+
+        for (int i : vertices) {
+            nextRequired.add(i);
         }
 
         return true;

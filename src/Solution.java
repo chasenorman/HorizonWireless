@@ -53,7 +53,7 @@ public class Solution implements BranchBound {
 
         UnionFind u = new UnionFind(G.n);
         for (Edge e : edges) {
-            if (e.u >= G.n || e.v >= G.n || G.adjacency[e.u][e.v] != e.w) {
+            if (e.u >= G.n || e.v >= G.n || G.adjacency[e.u][e.v] != e.w || G.adjacency[e.u][e.v] == Graph.INF) {
                 return false;
             }
             u.union(e.u, e.v);
@@ -130,6 +130,7 @@ public class Solution implements BranchBound {
     public void save(String file) throws IOException {
         BufferedWriter writer = new BufferedWriter( new FileWriter(file));
         writer.write(toString());
+        writer.flush();
         writer.close();
     }
 
