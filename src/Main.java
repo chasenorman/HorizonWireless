@@ -15,10 +15,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         //Graph.random(20, 2).save(graph);
-        Graph G = Graph.from(graph);
-        SolutionSet s = new SolutionSet(G);
-        System.out.println(s.heuristic());
-        //run();
+        run();
     }
 
     public static void run() throws IOException {

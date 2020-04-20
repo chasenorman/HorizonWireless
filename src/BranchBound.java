@@ -7,6 +7,4 @@ public interface BranchBound {
     double bound();
 
     double size();
-
-    Solution heuristic();
 }

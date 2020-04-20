@@ -181,8 +181,4 @@ public class Solution implements BranchBound {
         }
         return sum;
     }
-
-    public Solution heuristic() {
-        return this;
-    }
 }
