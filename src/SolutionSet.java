@@ -15,8 +15,6 @@ public class SolutionSet implements BranchBound {
     int nextMaxSize = -1;
     HashSet<Integer> nextRequired;
 
-    int center = 0;
-
 
     public SolutionSet(Graph G) {
         this.G = G;
@@ -25,7 +23,6 @@ public class SolutionSet implements BranchBound {
         G.edges.toArray(sorted);
         G.setArticulationPoints();
         required = new HashSet<>(G.articulationPoints);
-        center = G.center();
         Arrays.sort(sorted, SolutionSet::selectionOrder);
     }
 

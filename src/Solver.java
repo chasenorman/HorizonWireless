@@ -27,10 +27,14 @@ public class Solver extends Thread {
     public void run() {
         while (!todo.isEmpty()) {
             BranchBound b = todo.pop();
+            
+            if (b.bound() > best) {
+                continue;
+            }
 
-            //if (iterations % 100000 == 0) {
-            //    debug();
-            //}
+            if (iterations % 100000 == 0) {
+                debug();
+            }
 
             if (b instanceof Solution) {
                 try {
@@ -50,6 +54,7 @@ public class Solver extends Thread {
 
             iterations++;
         }
+        print("OPTIMAL");
     }
 
     public void debug() {

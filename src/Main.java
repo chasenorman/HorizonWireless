@@ -14,7 +14,7 @@ public class Main {
 
 
     public static void main(String[] args) throws IOException {
-        //Graph.random(20, 2).save(graph);
+        Graph.random(20, 2).save(graph);
         run();
     }
 
