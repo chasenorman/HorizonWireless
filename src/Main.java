@@ -14,12 +14,9 @@ public class Main {
     public static final String OUTPUT_DIR = "outputs/";
     public static final String OPT_DIR = "OPT/";
 
-    public static final String graph = "input/graph.in";
-    public static final String solution = "output/graph.out";
-
     public static void main(String[] args) throws IOException {
         //Graph.random(20, 2).save(graph);
-        run();
+        new Solver(INPUT_DIR + "medium-228.in", OUTPUT_DIR + "medium-228.out").start();
     }
 
     public static void cheese() throws IOException {

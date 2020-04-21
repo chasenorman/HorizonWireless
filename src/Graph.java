@@ -53,6 +53,9 @@ public class Graph {
     }
 
     public void add(int u, int v, int w) {
+        if (u == v) {
+            return;
+        }
         if (adjacency[u][v] != INF) {
             incident[u].remove(new Edge(u, v, adjacency[u][v]));
             incident[v].remove(new Edge(v, u, adjacency[u][v]));
