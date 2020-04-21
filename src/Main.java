@@ -1,26 +1,55 @@
 import java.io.IOException;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 
 public class Main {
     public static long start = System.currentTimeMillis();
     public static long temp;
     public static long inside = 0;
 
-    public static final String INPUT_DIR = "input/";
-    public static final String OUTPUT_DIR = "output/";
+    public static final String INPUT_DIR = "inputs/";
+    public static final String OUTPUT_DIR = "outputs/";
+    public static final String OPT_DIR = "OPT/";
 
     public static final String graph = "input/graph.in";
     public static final String solution = "output/graph.out";
 
-
     public static void main(String[] args) throws IOException {
-        Graph.random(20, 2).save(graph);
+        //Graph.random(20, 2).save(graph);
         run();
+    }
+
+    public static void cheese() throws IOException {
+        for (String file : new File(INPUT_DIR).list()) {
+            if (file.startsWith(".")) {
+                continue;
+            }
+
+            Graph G = Graph.from(INPUT_DIR + file);
+            for (int i = 0; i < G.n; i++) {
+                if (G.incident[i].size() == G.n-1) {
+                    Node<Integer> vertices = new Node<>();
+                    Solution s = new Solution(new Node<>(), new Node<>(i, vertices), G.n);
+                    System.out.println("CHEESE == " + s.verify(G) + " on " + file);
+                    if (s.verify(G)) {
+                        s.save("cheese/" + file.replace(".in", ".out"));
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     public static void run() throws IOException {
         for (String file : new File(INPUT_DIR).list()) {
             String output = file.replace(".in", ".out");
+            if (new File(OPT_DIR + output).exists()) {
+                continue;
+            }
+            //Graph G = Graph.from(INPUT_DIR + file);
             new Solver(INPUT_DIR + file, OUTPUT_DIR + output).start();
         }
     }

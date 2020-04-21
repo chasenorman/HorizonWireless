@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="HorizonWireless:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/HorizonWireless_jar</output-path>
+    <root id="archive" name="HorizonWireless.jar">
+      <element id="module-output" name="HorizonWireless" />
+    </root>
+  </artifact>
+</component>

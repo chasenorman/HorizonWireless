@@ -39,7 +39,7 @@ public class Graph {
 
     public static Graph from(String s) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(new File(s)));
-        String str = br.readLine();
+        String str = br.readLine().trim();
         Graph g = new Graph(Integer.parseInt(str));
         while ((str = br.readLine()) != null) {
             if (str.isEmpty()){
@@ -54,7 +54,10 @@ public class Graph {
 
     public void add(int u, int v, int w) {
         if (adjacency[u][v] != INF) {
-            throw new IllegalArgumentException();
+            incident[u].remove(new Edge(u, v, adjacency[u][v]));
+            incident[v].remove(new Edge(v, u, adjacency[u][v]));
+            edges.remove(new Edge(u, v, adjacency[u][v]).standard());
+            //throw new IllegalArgumentException();
         }
         Edge e = new Edge(u, v, w);
         incident[u].add(e);

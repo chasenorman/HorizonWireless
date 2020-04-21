@@ -19,20 +19,21 @@ public class Solver extends Thread {
             s.save(output);
         }
         best = s.bound();
-        print((best / 1000)+"");
+        //print((best / 1000)+"");
 
         todo.add(new SolutionSet(G));
     }
 
     public void run() {
+        print("Starting");
         while (!todo.isEmpty()) {
             BranchBound b = todo.pop();
-            
-            if (b.bound() > best) {
+
+            if (b.bound() >= best) {
                 continue;
             }
 
-            if (iterations % 100000 == 0) {
+            if (iterations % 250000 == 0) {
                 debug();
             }
 
@@ -46,7 +47,7 @@ public class Solver extends Thread {
                 print((best / 1000)+"");
             } else {
                 for (BranchBound next : b.branch()) {
-                    if (next.bound() <= best) {
+                    if (next.bound() < best) {
                         todo.add(next);
                     }
                 }
