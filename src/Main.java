@@ -9,6 +9,7 @@ public class Main {
     public static long start = System.currentTimeMillis();
     public static long temp;
     public static long inside = 0;
+    public static int seed = (int)System.currentTimeMillis();
 
     public static final String INPUT_DIR = "inputs/";
     public static final String OUTPUT_DIR = "outputs/";
@@ -16,7 +17,37 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         //Graph.random(20, 2).save(graph);
-        new Solver(INPUT_DIR + "medium-228.in", OUTPUT_DIR + "medium-228.out").start();
+        //cheese();
+        new Solver(INPUT_DIR + "medium-228.in", OUTPUT_DIR + "medium-228.out", OPT_DIR + "medium-228.out").start();
+    }
+
+    public static double testHeuristic() throws IOException {
+        double total = 0;
+        for (String file : new File(OPT_DIR).list()) {
+            if (file.startsWith(".")) {
+                continue;
+            }
+            String input = file.replace(".out", ".in");
+            Graph G = Graph.from(INPUT_DIR + input);
+            Solution opt = Solution.from(G, OPT_DIR + file);
+
+            if (!opt.verify(G)) {
+                throw new IllegalArgumentException();
+            }
+
+            Edge[] sorted = new Edge[G.edges.size()];
+            G.edges.toArray(sorted);
+            Arrays.sort(sorted, G::selectionOrder);
+            List<Edge> edges = Arrays.asList(sorted);
+
+            for (Edge e : opt.edges) {
+                if (edges.indexOf(e) == -1) {
+                    throw new IllegalArgumentException();
+                }
+                total += edges.indexOf(e)/(double)edges.size();
+            }
+        }
+        return total;
     }
 
     public static void cheese() throws IOException {
@@ -47,7 +78,7 @@ public class Main {
                 continue;
             }
             //Graph G = Graph.from(INPUT_DIR + file);
-            new Solver(INPUT_DIR + file, OUTPUT_DIR + output).start();
+            new Solver(INPUT_DIR + file, OUTPUT_DIR + output, OPT_DIR + output).start();
         }
     }
 
