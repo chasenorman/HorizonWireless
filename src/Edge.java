@@ -50,8 +50,4 @@ public class Edge implements Comparable<Edge> {
     public int hashCode() {
         return u*101 + v;
     }
-
-    public double score() { // lower is better.
-        return w;
-    }
 }

@@ -1,8 +1,5 @@
 import java.io.*;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.PriorityQueue;
-import java.util.TreeSet;
+import java.util.*;
 
 public class Graph {
     public static final boolean DEBUG = true;
@@ -313,5 +310,19 @@ public class Graph {
             }
         }
         return minIndex;
+    }
+
+    public double score(Edge e) { // lower is better.
+        double ud = incident[e.u].size();
+        double vd = incident[e.v].size();
+
+        double n = Math.sqrt(e.w);
+        double d = ud*vd;
+        //return n/d;
+        return n/d; //n/d;
+    }
+
+    public int selectionOrder(Edge e1, Edge e2) {
+        return Double.compare(score(e2), score(e1));
     }
 }

@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 import java.util.Stack;
 
 public class Solver extends Thread {
@@ -6,9 +8,12 @@ public class Solver extends Thread {
     String output;
     Stack<BranchBound> todo = new Stack<>();
     int iterations = 1;
+    Solution current;
+    String opt;
 
-    public Solver(String input, String output) throws IOException {
+    public Solver(String input, String output, String opt) throws IOException {
         this.output = output;
+        this.opt = opt;
         Graph G = Graph.from(input);
 
         Solution s;
@@ -18,6 +23,7 @@ public class Solver extends Thread {
             s = G.shortestPathTree(G.center());
             s.save(output);
         }
+        current = s;
         best = s.bound();
         //print((best / 1000)+"");
 
@@ -40,6 +46,7 @@ public class Solver extends Thread {
             if (b instanceof Solution) {
                 try {
                     ((Solution) b).save(output);
+                    current = (Solution) b;
                 } catch (Exception e) {
                     throw new IllegalArgumentException();
                 }
@@ -54,6 +61,11 @@ public class Solver extends Thread {
             }
 
             iterations++;
+        }
+        try {
+            current.save(opt);
+        } catch (Exception e) {
+            throw new IllegalArgumentException();
         }
         print("OPTIMAL");
     }

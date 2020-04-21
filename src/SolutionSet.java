@@ -23,7 +23,7 @@ public class SolutionSet implements BranchBound {
         G.edges.toArray(sorted);
         G.setArticulationPoints();
         required = new HashSet<>(G.articulationPoints);
-        Arrays.sort(sorted, SolutionSet::selectionOrder);
+        Arrays.sort(sorted, G::selectionOrder);
     }
 
     private SolutionSet(SolutionSet prev, Node<Edge> edges, Node<Edge> skipped, int nextIndex, int maxSize, HashSet<Integer> required) {
@@ -199,10 +199,6 @@ public class SolutionSet implements BranchBound {
         }
 
         return true;
-    }
-
-    private static int selectionOrder(Edge e1, Edge e2) {
-        return Double.compare(e2.score(), e1.score());
     }
 
     public String toString() {
