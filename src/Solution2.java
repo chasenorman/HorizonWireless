@@ -166,4 +166,22 @@ public class Solution2 implements BranchBound {
         }
         return false;
     }
+
+    public Solution2 removeEdges() {
+        Solution2 s = this;
+        boolean found = true;
+        while (found) {
+            for (Edge e : s.edges) {
+                TreeSet<Edge> es = new TreeSet<>(edges);
+                es.remove(e);
+                Solution2 next = new Solution2(G, es);
+                if (next.isValid()) {
+                    s = next;
+                    break;
+                }
+            }
+            found = false;
+        }
+        return s;
+    }
 }
