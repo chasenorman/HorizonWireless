@@ -181,4 +181,9 @@ public class Solution implements BranchBound {
         }
         return sum;
     }
+
+    @Override
+    public int order() {
+        return n;
+    }
 }

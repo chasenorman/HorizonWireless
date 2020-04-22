@@ -6,7 +6,7 @@ import java.util.Stack;
 public class Solver extends Thread {
     double best;
     String output;
-    Stack<BranchBound> todo = new Stack<>();
+    OrderedStackTree<BranchBound> todo = new OrderedStackTree<>();
     int iterations = 1;
     Solution current;
     String opt;
@@ -27,7 +27,7 @@ public class Solver extends Thread {
         best = s.bound();
         //print((best / 1000)+"");
 
-        todo.add(new SolutionSet(G));
+        todo.push(new SolutionSet(G));
     }
 
     public void run() {
@@ -55,7 +55,7 @@ public class Solver extends Thread {
             } else {
                 for (BranchBound next : b.branch()) {
                     if (next.bound() < best) {
-                        todo.add(next);
+                        todo.push(next);
                     }
                 }
             }
@@ -71,11 +71,11 @@ public class Solver extends Thread {
     }
 
     public void debug() {
-        double total = 1;
-        for (BranchBound i : todo) {
+        //double total = 1;
+        /*for (BranchBound i : todo) {
             total -= i.size();
-        }
-        print("percent: " + total);
+        }*/
+        //print("percent: " + total);
     }
 
     public void print(String s) {

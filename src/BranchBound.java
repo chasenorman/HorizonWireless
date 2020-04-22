@@ -1,7 +1,7 @@
 import java.io.IOException;
 import java.util.*;
 
-public interface BranchBound {
+public interface BranchBound extends WeakOrder {
     List<BranchBound> branch();
 
     double bound();

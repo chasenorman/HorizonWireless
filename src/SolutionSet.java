@@ -204,4 +204,9 @@ public class SolutionSet implements BranchBound {
     public String toString() {
         return edges.toString();
     }
+
+    @Override
+    public int order() {
+        return edges.size;
+    }
 }
