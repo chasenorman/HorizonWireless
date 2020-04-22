@@ -322,7 +322,7 @@ public class Graph {
         double n = Math.sqrt(e.w);
         double d = ud*vd;
         //return n/d;
-        return 1/Math.max(ud, vd); //n/d;
+        return e.v/(double)e.u; //n/d;
     }
 
     public int selectionOrder(Edge e1, Edge e2) {
