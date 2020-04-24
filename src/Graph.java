@@ -318,11 +318,12 @@ public class Graph {
     public double score(Edge e) { // lower is better.
         double ud = incident[e.u].size();
         double vd = incident[e.v].size();
-
+        Random r = new Random(e.u + 101*e.v + 10001*Main.seed);
         double n = Math.sqrt(e.w);
         double d = ud*vd;
         //return n/d;
-        return n/d; //n/d;
+
+        return r.nextDouble() + n/d; //n/d;
     }
 
     public int selectionOrder(Edge e1, Edge e2) {

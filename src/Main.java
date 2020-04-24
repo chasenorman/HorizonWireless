@@ -1,5 +1,4 @@
-import java.io.IOException;
-import java.io.File;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -20,6 +19,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         //Graph.random(20, 2).save(graph);
         //cheese();
+        //recover();
         run();
     }
 
@@ -81,6 +81,19 @@ public class Main {
                 continue;
             }
             new Solver(INPUT_DIR + file, OUTPUT_DIR + output, OPT_DIR + output).start();
+        }
+    }
+
+    public static void recover() throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader("submission.json"));
+        String[] tokens = br.readLine().split("\"");
+        for (int i = 1; i < tokens.length; i+=4) {
+            String output = tokens[i].replace(".in", ".out");
+            String text = tokens[i+2].replace("\\n", "\n");
+            BufferedWriter writer = new BufferedWriter( new FileWriter("save/" + output));
+            writer.write(text);
+            writer.flush();
+            writer.close();
         }
     }
 
