@@ -62,12 +62,14 @@ public class Solution implements BranchBound {
 
     public boolean verify(Graph G) {
         if (edges.size != vertices.size - 1 || G.n != n || vertices.size == 0) {
+            System.out.println(edges.size + ", " + vertices.size);
             return false;
         }
 
         UnionFind u = new UnionFind(G.n);
         for (Edge e : edges) {
             if (e.u >= G.n || e.v >= G.n || G.adjacency[e.u][e.v] != e.w || G.adjacency[e.u][e.v] == Graph.INF) {
+                System.out.println("2");
                 return false;
             }
             u.union(e.u, e.v);
@@ -76,6 +78,7 @@ public class Solution implements BranchBound {
         int cc = u.find(vertices.last);
         for (int v : vertices) {
             if (v >= G.n || u.find(v) != cc) {
+                System.out.println("3");
                 return false;
             }
         }
@@ -87,6 +90,7 @@ public class Solution implements BranchBound {
                         continue Outer;
                     }
                 }
+                System.out.println("4");
                 return false;
             }
         }
@@ -185,5 +189,9 @@ public class Solution implements BranchBound {
     @Override
     public int order() {
         return n;
+    }
+
+    public Solution heuristic() {
+        return this;
     }
 }

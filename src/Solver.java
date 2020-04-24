@@ -36,12 +36,8 @@ public class Solver extends Thread {
         while (!todo.isEmpty()) {
             BranchBound b = todo.pop();
 
-            if (iterations % 250000 == 0) {
-                debug();
-            }
-
             List<BranchBound> branch = b.branch();
-            branch.sort(Comparator.comparingDouble(a->-a.bound()));
+            branch.sort(Comparator.comparingDouble(a->-a.heuristic().bound()));
             for (BranchBound next : branch) {
                 if (next instanceof Solution) {
                     if (next.bound() >= best) {
@@ -71,11 +67,6 @@ public class Solver extends Thread {
     }
 
     public void debug() {
-        //double total = 1;
-        /*for (BranchBound i : todo) {
-            total -= i.size();
-        }*/
-        //print("percent: " + total);
     }
 
     public void print(String s) {

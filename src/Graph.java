@@ -323,7 +323,7 @@ public class Graph {
         double d = ud*vd;
         //return n/d;
 
-        return r.nextDouble() + n/d; //n/d;
+        return n/d; //n/d;
     }
 
     public int selectionOrder(Edge e1, Edge e2) {

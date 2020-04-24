@@ -7,4 +7,6 @@ public interface BranchBound extends WeakOrder {
     double bound();
 
     double size();
+
+    Solution heuristic();
 }

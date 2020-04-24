@@ -11,9 +11,12 @@ public class SolutionSet implements BranchBound {
 
     long cost = -1;
     int maxSize;
+    int center;
 
     int nextMaxSize = -1;
     HashSet<Integer> nextRequired;
+
+    Solution heuristic;
 
 
     public SolutionSet(Graph G) {
@@ -21,6 +24,7 @@ public class SolutionSet implements BranchBound {
         maxSize = G.n; // G is connected.
         sorted = new Edge[G.edges.size()];
         G.edges.toArray(sorted);
+        this.center = G.center();
         G.setArticulationPoints();
         required = new HashSet<>(G.articulationPoints);
         Arrays.sort(sorted, G::selectionOrder);
@@ -144,13 +148,30 @@ public class SolutionSet implements BranchBound {
         }
 
         Integer[] required = this.required.toArray(new Integer[0]);
+        int[] longest = new int[G.n];
+
 
         for (int i = 0; i < required.length; i++) {
             for (int j = i+1; j < required.length; j++) {
+                if (distance[required[i]][required[j]] > longest[required[i]]) {
+                    longest[required[i]] = distance[required[i]][required[j]];
+                }
+                if (distance[required[i]][required[j]] > longest[required[j]]) {
+                    longest[required[j]] = distance[required[i]][required[j]];
+                }
                 cost += distance[required[i]][required[j]];
             }
         }
         cost *= 2;
+
+        if (required.length != 0) {
+            center = required[0];
+            for (int r : required) {
+                if(longest[r] < longest[center]) {
+                    center = r;
+                }
+            }
+        }
     }
 
     private boolean canSkipTo(int index) {
@@ -174,24 +195,27 @@ public class SolutionSet implements BranchBound {
             nextRequired.add(i);
         }
 
+        nextRequired.add(sorted[index].u);
+        nextRequired.add(sorted[index].v);
+
         nextMaxSize = 0;
         Outer: for (int i = 0; i < G.n; i++) {
             if (u.find(i) == cc) { // i is plausible
                 nextMaxSize++;
             } else {
-                int found = 0;
+                boolean found = false;
                 int add = 0;
                 for (Edge e : G.incident[i]) {
                     if (u.find(e.v) == cc) {
-                        if (found == 1) {
+                        if (found) {
                             continue Outer;
                         }
                         add = e.v;
-                        found++;
+                        found = true;
                     }
                 }
-                if (found == 1) {
-                    nextRequired.add(add); // add must be in the final graph.
+                if (found) {
+                    nextRequired.add(add); // add must be in the final graph. TODO paths to these nodes?
                     continue;
                 }
                 return false;
@@ -199,6 +223,81 @@ public class SolutionSet implements BranchBound {
         }
 
         return true;
+    }
+
+    public Solution heuristic() {
+        if (heuristic != null) {
+            return heuristic;
+        }
+
+        if (edges.size == 0) {
+            return G.shortestPathTree(center);
+        }
+
+        if (cost == -1) {
+            computeCost();
+        }
+
+        int[] prev = new int[G.n];
+        int[] dist = new int[G.n];
+        Node<Edge>[] incident = new Node[G.n];
+        for (int i = 0; i < G.n; i++) {
+            incident[i] = new Node<>();
+        }
+
+        UnionFind uf = new UnionFind(G.n);
+        for (Edge e : edges) {
+            incident[e.u] = new Node<>(e, incident[e.u]);
+            incident[e.v] = new Node<>(e.reversed(), incident[e.v]);
+            uf.union(e.u, e.v);
+        }
+        for (int i = nextIndex; i < sorted.length; i++) {
+            Edge e = sorted[i];
+            if (uf.find(e.u) != uf.find(e.v)) {
+                incident[e.u] = new Node<>(e, incident[e.u]);
+                incident[e.v] = new Node<>(e.reversed(), incident[e.v]);
+            }
+        }
+
+        PriorityQueue<Integer> q = new PriorityQueue<>(Comparator.comparingInt(o -> dist[o]));
+
+        for (int i = 0; i < G.n; i++) {
+            if (i != center) {
+                dist[i] = Graph.INF;
+            }
+            q.add(center);
+        }
+
+        while (!q.isEmpty()) {
+            int u = q.poll();
+            for (Edge e : incident[u]) {
+                int temp = dist[u] + e.w;
+                if (temp < dist[e.v]) {
+                    dist[e.v] = temp;
+                    prev[e.v] = u;
+                    q.remove(e.v);
+                    q.add(e.v);
+                }
+            }
+        }
+
+        Node<Edge> edges = new Node<>();
+
+        for (int i = 0; i < G.n; i++) {
+            if (i != center && dist[i] != Graph.INF) {
+                edges = new Node<>(new Edge(i, prev[i], G.adjacency[i][prev[i]]).standard(), edges);
+            }
+        }
+
+        //could compute vertices
+        Solution result = new Solution(edges, G.n);
+
+        if (!result.verify(G)) {
+            throw new IllegalArgumentException();
+        }
+
+        heuristic = result;
+        return heuristic;
     }
 
     public String toString() {
