@@ -17,6 +17,8 @@ public class Graph {
 
     public final int n;
 
+    public Solution current;
+
     public Graph(int n) {
         this.n = n;
         incident = new HashSet[n];
@@ -46,6 +48,7 @@ public class Graph {
             g.add(Integer.parseInt(result[0]), Integer.parseInt(result[1]), (int)(Float.parseFloat(result[2])*1000));
         }
         br.close();
+        g.current = Solution.from(g, s.replace(".in",".out").replace(Main.INPUT_DIR, Main.OUTPUT_DIR));
         return g;
     }
 
@@ -320,10 +323,17 @@ public class Graph {
         double vd = incident[e.v].size();
         Random r = new Random(e.u + 101*e.v + 10001*Main.seed);
         double n = Math.sqrt(e.w);
-        double d = ud*vd;
+        double d = 10;//ud*vd;
+        boolean inCurrent = false;
+        for (Edge o : current.edges) {
+            if (o.equals(e)) {
+                inCurrent = true;
+                break;
+            }
+        }
         //return n/d;
 
-        return n/d; //n/d;
+        return 10*r.nextDouble() + n/d - (inCurrent?50:0); //n/d;
     }
 
     public int selectionOrder(Edge e1, Edge e2) {

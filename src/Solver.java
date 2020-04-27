@@ -1,13 +1,12 @@
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Stack;
+import java.util.*;
 
 public class Solver extends Thread {
+    public static final int LIMIT = 1500;
     double best;
     String output;
-    Stack<SolutionSet> todo = new Stack<>();
+    TreeSet<BranchBound> todo = new TreeSet<>(Comparator.comparingDouble(s->s.heuristic().bound() + s.order()*2000));
+    //Stack<BranchBound> todo = new Stack<>();
     int iterations = 1;
     Solution current;
     String opt;
@@ -28,31 +27,44 @@ public class Solver extends Thread {
         best = s.bound();
         //print((best / 1000)+"");
 
-        todo.push(new SolutionSet(G));
+        todo.add(new SolutionSet(G));
+    }
+
+    public BranchBound next() {
+        return todo.pollFirst();
+    }
+
+    public void add(BranchBound next) {
+        if (todo.size() < LIMIT) {
+            todo.add(next);
+        } else if (next.heuristic().bound() < todo.last().heuristic().bound()) {
+            todo.pollLast();
+            todo.add(next);
+        }
     }
 
     public void run() {
         print("Starting");
         while (!todo.isEmpty()) {
-            BranchBound b = todo.pop();
+            BranchBound b = next();
+
+            Solution heuristic = b.heuristic();
+            if (heuristic.bound() < best) {
+                try {
+                    heuristic.save(output);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException();
+                }
+                current = heuristic;
+                best = heuristic.bound();
+                print((best / 1000)+"");
+            }
 
             List<BranchBound> branch = b.branch();
-            branch.sort(Comparator.comparingDouble(a->-a.heuristic().bound()));
+            //branch.sort(Comparator.comparingDouble(a->-a.heuristic().bound()));
             for (BranchBound next : branch) {
-                if (next instanceof Solution) {
-                    if (next.bound() >= best) {
-                        continue;
-                    }
-                    try {
-                        ((Solution) next).save(output);
-                        current = (Solution) next;
-                    } catch (Exception e) {
-                        throw new IllegalArgumentException();
-                    }
-                    best = b.bound();
-                    print((best / 1000)+"");
-                } else if (/*Math.max(1, 5 - 0.15*next.order())*/next.bound() < best) {
-                    todo.push((SolutionSet) next);
+                if (Math.max(1, 2 - 0.15*next.order())*next.bound() < best) {
+                    add(next);
                 }
             }
 
