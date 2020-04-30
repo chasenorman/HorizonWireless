@@ -63,7 +63,7 @@ public class Solver extends Thread {
             List<BranchBound> branch = b.branch();
             //branch.sort(Comparator.comparingDouble(a->-a.heuristic().bound()));
             for (BranchBound next : branch) {
-                if (Math.max(1, 2 - 0.15*next.order())*next.bound() < best) {
+                if (/*Math.max(1, 2 - 0.15*next.order())*/next.bound() < best) {
                     add(next);
                 }
             }

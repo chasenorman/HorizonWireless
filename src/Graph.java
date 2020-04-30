@@ -333,7 +333,7 @@ public class Graph {
         }
         //return n/d;
 
-        return 10*r.nextDouble() + n/d - (inCurrent?50:0); //n/d;
+        return 5*r.nextDouble() + n/d - (inCurrent?100:0); //n/d;
     }
 
     public int selectionOrder(Edge e1, Edge e2) {

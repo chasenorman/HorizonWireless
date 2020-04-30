@@ -28,7 +28,7 @@ public class Main {
         List<String> only = Arrays.asList(compete);
         for (String file : new File(INPUT_DIR).list()) {
             String output = file.replace(".in", ".out");
-            if (new File(OPT_DIR + output).exists() ){//|| !only.contains(output.replace(".out",""))) {
+            if (new File(OPT_DIR + output).exists() || !only.contains(output.replace(".out",""))) {
                 continue;
             }
             Graph G = Graph.from(INPUT_DIR + file);
