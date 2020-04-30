@@ -11,7 +11,7 @@ public class SolutionSet implements BranchBound {
 
     long cost = -1;
     int maxSize;
-    int center;
+    int center = -1;
 
     int nextMaxSize = -1;
     HashSet<Integer> nextRequired;
@@ -234,7 +234,7 @@ public class SolutionSet implements BranchBound {
             return G.shortestPathTree(center);
         }
 
-        if (cost == -1) {
+        if (center == -1) {
             computeCost();
         }
 
