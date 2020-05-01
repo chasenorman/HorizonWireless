@@ -19,7 +19,7 @@ public class SolutionSet implements BranchBound {
     Solution heuristic;
 
 
-    public SolutionSet(Graph G) {
+    public SolutionSet(Graph G, Solver S) {
         this.G = G;
         maxSize = G.n; // G is connected.
         sorted = new Edge[G.edges.size()];
@@ -27,7 +27,7 @@ public class SolutionSet implements BranchBound {
         this.center = G.center();
         G.setArticulationPoints();
         required = new HashSet<>(G.articulationPoints);
-        Arrays.sort(sorted, G::selectionOrder);
+        Arrays.sort(sorted, S::selectionOrder);
     }
 
     private SolutionSet(SolutionSet prev, Node<Edge> edges, Node<Edge> skipped, int nextIndex, int maxSize, HashSet<Integer> required) {

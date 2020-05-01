@@ -6,15 +6,15 @@ public class Solver extends Thread {
     double best;
     String output;
     TreeSet<BranchBound> todo = new TreeSet<>(Comparator.comparingDouble(s->s.heuristic().bound() + s.order()*2000));
-    //Stack<BranchBound> todo = new Stack<>();
     int iterations = 1;
     Solution current;
     String opt;
+    Graph G;
 
     public Solver(String input, String output, String opt) throws IOException {
         this.output = output;
         this.opt = opt;
-        Graph G = Graph.from(input);
+        G = Graph.from(input);
 
         Solution s;
         try {
@@ -25,9 +25,7 @@ public class Solver extends Thread {
         }
         current = s;
         best = s.bound();
-        //print((best / 1000)+"");
-
-        todo.add(new SolutionSet(G));
+        todo.add(new SolutionSet(G, this));
     }
 
     public BranchBound next() {
@@ -44,7 +42,7 @@ public class Solver extends Thread {
     }
 
     public void run() {
-        print("Starting");
+        print("Starting with " + (best/1000));
         while (!todo.isEmpty()) {
             BranchBound b = next();
 
@@ -60,21 +58,14 @@ public class Solver extends Thread {
                 print((best / 1000)+"");
             }
 
-            List<BranchBound> branch = b.branch();
-            //branch.sort(Comparator.comparingDouble(a->-a.heuristic().bound()));
-            for (BranchBound next : branch) {
-                if (/*Math.max(1, 2 - 0.15*next.order())*/next.bound() < best) {
+            for (BranchBound next : b.branch()) {
+                if (next.bound() < best) {
                     add(next);
                 }
             }
 
             iterations++;
         }
-        /*try {
-            current.save(opt);
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }*/
         print("DONE");
     }
 
@@ -83,5 +74,26 @@ public class Solver extends Thread {
 
     public void print(String s) {
         System.out.println("[" + output + "]" + " " + s);
+    }
+
+    public double score(Edge e) { // lower is better.
+        double ud = G.incident[e.u].size();
+        double vd = G.incident[e.v].size();
+        Random r = new Random(e.u + 101*e.v + 10001*Main.seed);
+        double n = Math.sqrt(e.w);
+        double d = 10;//ud*vd;
+        boolean inCurrent = false;
+        for (Edge o : current.edges) {
+            if (o.equals(e)) {
+                inCurrent = true;
+                break;
+            }
+        }
+
+        return 5*r.nextDouble() + n/d - (inCurrent?100:0);
+    }
+
+    public int selectionOrder(Edge e1, Edge e2) {
+        return Double.compare(score(e2), score(e1));
     }
 }

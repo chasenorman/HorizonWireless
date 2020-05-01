@@ -17,8 +17,6 @@ public class Graph {
 
     public final int n;
 
-    public Solution current;
-
     public Graph(int n) {
         this.n = n;
         incident = new HashSet[n];
@@ -48,7 +46,6 @@ public class Graph {
             g.add(Integer.parseInt(result[0]), Integer.parseInt(result[1]), (int)(Float.parseFloat(result[2])*1000));
         }
         br.close();
-        g.current = Solution.from(g, s.replace(".in",".out").replace(Main.INPUT_DIR, Main.OUTPUT_DIR));
         return g;
     }
 
@@ -318,25 +315,18 @@ public class Graph {
         return minIndex;
     }
 
-    public double score(Edge e) { // lower is better.
-        double ud = incident[e.u].size();
-        double vd = incident[e.v].size();
-        Random r = new Random(e.u + 101*e.v + 10001*Main.seed);
-        double n = Math.sqrt(e.w);
-        double d = 10;//ud*vd;
-        boolean inCurrent = false;
-        for (Edge o : current.edges) {
-            if (o.equals(e)) {
-                inCurrent = true;
-                break;
+    public Solution cheese() {
+        for (int i = 0; i < n; i++) {
+            if (incident[i].size() == n-1) {
+                Node<Integer> vertices = new Node<>();
+                Solution s = new Solution(new Node<>(), new Node<>(i, vertices), n);
+                if (s.verify(this)) {
+                    return s;
+                } else {
+                    throw new RuntimeException("!!!");
+                }
             }
         }
-        //return n/d;
-
-        return 5*r.nextDouble() + n/d - (inCurrent?100:0); //n/d;
-    }
-
-    public int selectionOrder(Edge e1, Edge e2) {
-        return Double.compare(score(e2), score(e1));
+        return null;
     }
 }
