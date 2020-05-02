@@ -67,7 +67,7 @@ public class Solution implements BranchBound {
 
         UnionFind u = new UnionFind(G.n);
         for (Edge e : edges) {
-            if (e.u >= G.n || e.v >= G.n || G.adjacency[e.u][e.v] != e.w || G.adjacency[e.u][e.v] == Graph.INF) {
+            if (e.u >= G.n || e.v >= G.n || G.adjacency[e.u][e.v] != e.w || G.adjacency[e.u][e.v] == Graph.INF || u.find(e.u) == u.find(e.v)) {
                 return false;
             }
             u.union(e.u, e.v);
@@ -200,10 +200,44 @@ public class Solution implements BranchBound {
                 }
             }
             Solution result = new Solution(next, n);
-            if (result.verify(G)) {
-                return result.relax(G);
+            if (result.verify(G) && result.bound() < this.bound()) {
+                return result;
             }
         }
         return this;
+    }
+
+    public Solution expand(Graph G) {
+        UnionFind u = new UnionFind(G.n);
+        for (Edge e : edges) {
+            u.union(e.u, e.v);
+        }
+        int cc = u.find(vertices.last);
+
+        for (Edge e : G.edges) {
+            if (u.find(e.u) == cc && u.find(e.v) != cc) {
+                Solution s = new Solution(new Node<>(e, edges), new Node<Integer>(e.v, vertices), G.n);
+                if (s.bound() < this.bound()) {
+                    return s;
+                }
+            } else if (u.find(e.v) == cc && u.find(e.u) != cc) {
+                Solution s = new Solution(new Node<>(e, edges), new Node<Integer>(e.u, vertices), G.n);
+                if (s.bound() < this.bound()) {
+                    return s;
+                }
+            }
+        }
+        return this;
+    }
+
+    public Solution settle(Graph G) {
+        Solution current = this;
+        Solution prev = null;
+        while (prev != current) {
+            prev = current;
+            current = current.relax(G);
+            current = current.expand(G);
+        }
+        return current;
     }
 }

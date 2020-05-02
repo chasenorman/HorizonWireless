@@ -77,11 +77,6 @@ public class Solver extends Thread {
     }
 
     public double score(Edge e) { // lower is better.
-        double ud = G.incident[e.u].size();
-        double vd = G.incident[e.v].size();
-        Random r = new Random(e.u + 101*e.v + 10001*Main.seed);
-        double n = Math.sqrt(e.w);
-        double d = 10;//ud*vd;
         boolean inCurrent = false;
         for (Edge o : current.edges) {
             if (o.equals(e)) {
@@ -89,8 +84,13 @@ public class Solver extends Thread {
                 break;
             }
         }
+        double ud = G.incident[e.u].size();
+        double vd = G.incident[e.v].size();
+        Random r = new Random(e.u + 101*e.v + 10001*Main.seed);
+        double n = Math.sqrt(e.w);
+        double d = ud*vd;
 
-        return 5*r.nextDouble() + n/d - (inCurrent?100:0);
+        return /*15*r.nextDouble()*/ + (n/d) - (inCurrent?100:0);
     }
 
     public int selectionOrder(Edge e1, Edge e2) {
