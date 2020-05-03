@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class Solver extends Thread {
-    public static final int LIMIT = 1500;
+    public static final int LIMIT = 2000;
     double best;
     String output;
     TreeSet<BranchBound> todo = new TreeSet<>(Comparator.comparingDouble(s->s.heuristic().bound() + s.order()*2000));
@@ -88,9 +88,9 @@ public class Solver extends Thread {
         double vd = G.incident[e.v].size();
         Random r = new Random(e.u + 101*e.v + 10001*Main.seed);
         double n = Math.sqrt(e.w);
-        double d = ud*vd;
+        double d = 10;//ud*vd;
 
-        return /*15*r.nextDouble()*/ + (n/d) - (inCurrent?100:0);
+        return 15*r.nextDouble() + (n/d) - (inCurrent?100:0);
     }
 
     public int selectionOrder(Edge e1, Edge e2) {

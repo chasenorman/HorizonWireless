@@ -290,7 +290,7 @@ public class SolutionSet implements BranchBound {
         }
 
         //could compute vertices
-        Solution result = new Solution(edges, G.n).settle(G);
+        Solution result = new Solution(edges, G.n).settle(G).replace(G);
 
         if (!result.verify(G)) {
             throw new IllegalArgumentException();

@@ -240,4 +240,32 @@ public class Solution implements BranchBound {
         }
         return current;
     }
+
+    public Solution replace(Graph G) {
+        for (Edge e : edges) {
+            Node<Edge> next = new Node<>();
+            UnionFind u = new UnionFind(G.n);
+            for (Edge e2 : edges) {
+                if (e2 != e) {
+                    next = new Node<>(e2, next);
+                    u.union(e2.u, e2.v);
+                }
+            }
+            int cc1 = u.find(e.u);
+            int cc2 = u.find(e.v);
+
+            for (Edge e2 : G.edges) {
+                if (((u.find(e2.u) == cc1 && u.find(e2.v) == cc2) || (u.find(e2.v) == cc1 && u.find(e2.u) == cc2)) && e2 != e) {
+                    Solution result = new Solution(new Node<>(e2, next), vertices, n);
+                    if (!result.verify(G)) {
+                        throw new IllegalArgumentException();
+                    }
+                    if (result.bound() < this.bound()) {
+                        return result.replace(G);
+                    }
+                }
+            }
+        }
+        return this;
+    }
 }
