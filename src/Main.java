@@ -16,10 +16,7 @@ public class Main {
     public static final String OPT_DIR = "OPT/";
     public static boolean PRUNE = true;
 
-    public static final int PROCESSES = 1;
-    public static final int PROCESS = 0;
-
-    static String[] compete = {"small-99","medium-31","medium-100","medium-115","medium-218","large-31","large-38","large-39","large-42","large-55","large-79","large-89","large-97","large-117","large-139","large-141","large-143","large-146","large-154","large-161","large-169","large-188","large-202","large-211","large-233","large-239","large-258","large-274","large-279","large-285","large-321","large-334","large-337","large-339","large-340","large-342","large-361","large-370","large-372","large-374","large-376","large-380","large-385","large-386","large-387","large-388","large-391","large-392","large-394","large-396","large-399","large-400"};
+    static String[] compete = {"small-99","medium-31","medium-115","large-38","large-39","large-141","large-154","large-161","large-202","large-258","large-274","large-279","large-285","large-339","large-342","large-361","large-372","large-380","large-388","large-394","large-396","large-400"};
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -35,6 +32,8 @@ public class Main {
             check();
         } else if (args[0].equals("replace")) {
             replace();
+        } else if (args[0].equals("replace2")) {
+            replace2();
         } else {
             System.out.println("unknown args.");
         }
@@ -88,6 +87,23 @@ public class Main {
         }
     }
 
+    public static void replace2() throws IOException {
+        List<String> only = Arrays.asList(compete);
+        for (String file : new File(INPUT_DIR).list()) {
+            String output = file.replace(".in", ".out");
+            if (file.startsWith(".")) {
+                continue;
+            }
+            Graph G = Graph.from(INPUT_DIR + file);
+            Solution current = Solution.from(G,OUTPUT_DIR + output);
+            Solution attempt = current.replace2(G);
+            if (attempt.bound() < current.bound()) {
+                attempt.save(OUTPUT_DIR + output);
+                System.out.println(file + " " + (attempt.bound()/1000));
+            }
+        }
+    }
+
     public static void cheese() throws IOException {
         for (String file : new File(INPUT_DIR).list()) {
             if (file.startsWith(".")) {
@@ -107,7 +123,7 @@ public class Main {
         List<String> only = Arrays.asList(compete);
         for (String file : new File(INPUT_DIR).list()) {
             String output = file.replace(".in", ".out");
-            if (file.startsWith(".") || file.hashCode() % PROCESSES != PROCESS) {
+            if (file.startsWith(".")) {
                 continue;
             }
             if (PRUNE && !only.contains(output.replace(".out",""))) {
