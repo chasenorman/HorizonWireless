@@ -14,17 +14,17 @@ public class Main {
     public static final String INPUT_DIR = "inputs/";
     public static final String OUTPUT_DIR = "outputs/";
     public static final String OPT_DIR = "OPT/";
-    public static boolean PRUNE = true;
+    public static boolean PRUNE = false;
 
-    static String[] compete = {"small-99","medium-31","medium-115","large-38","large-39","large-141","large-154","large-161","large-202","large-258","large-274","large-279","large-285","large-339","large-342","large-361","large-372","large-380","large-388","large-394","large-396","large-400"};
+    static String[] compete = {"small-99","medium-31","medium-115","large-15","large-16","large-38","large-89","large-258","large-274","large-279","large-285","large-297","large-339","large-361","large-371","large-372","large-373","large-377","large-378","large-381","large-390","large-393","large-394","large-395","large-396"};
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             run();
         } else if (args[0].equals("settle")) {
             settle();
-        } else if (args[0].equals("all")) {
-            PRUNE = false;
+        } else if (args[0].equals("only")) {
+            PRUNE = true;
             run();
         } else if (args[0].equals("recover")) {
             recover();
@@ -32,8 +32,6 @@ public class Main {
             check();
         } else if (args[0].equals("replace")) {
             replace();
-        } else if (args[0].equals("replace2")) {
-            replace2();
         } else {
             System.out.println("unknown args.");
         }
@@ -87,43 +85,11 @@ public class Main {
         }
     }
 
-    public static void replace2() throws IOException {
-        List<String> only = Arrays.asList(compete);
-        for (String file : new File(INPUT_DIR).list()) {
-            String output = file.replace(".in", ".out");
-            if (file.startsWith(".")) {
-                continue;
-            }
-            Graph G = Graph.from(INPUT_DIR + file);
-            Solution current = Solution.from(G,OUTPUT_DIR + output);
-            Solution attempt = current.replace2(G);
-            if (attempt.bound() < current.bound()) {
-                attempt.save(OUTPUT_DIR + output);
-                System.out.println(file + " " + (attempt.bound()/1000));
-            }
-        }
-    }
-
-    public static void cheese() throws IOException {
-        for (String file : new File(INPUT_DIR).list()) {
-            if (file.startsWith(".")) {
-                continue;
-            }
-
-            Graph G = Graph.from(INPUT_DIR + file);
-            Solution s = G.cheese();
-            if (s != null) {
-                s.save(OUTPUT_DIR + file);
-                System.out.println(file + " cheesed!");
-            }
-        }
-    }
-
     public static void run() throws IOException {
         List<String> only = Arrays.asList(compete);
         for (String file : new File(INPUT_DIR).list()) {
             String output = file.replace(".in", ".out");
-            if (file.startsWith(".")) {
+            if (file.startsWith(".") || new File(OPT_DIR + output).exists()) {
                 continue;
             }
             if (PRUNE && !only.contains(output.replace(".out",""))) {

@@ -43,7 +43,7 @@ public class Graph {
                 continue;
             }
             String[] result = str.split(" ");
-            g.add(Integer.parseInt(result[0]), Integer.parseInt(result[1]), (int)(Float.parseFloat(result[2])*1000));
+            g.add(Integer.parseInt(result[0]), Integer.parseInt(result[1]), (int)Math.round(Double.parseDouble(result[2])*1000));
         }
         br.close();
         return g;

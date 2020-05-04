@@ -269,38 +269,4 @@ public class Solution implements BranchBound {
         }
         return this;
     }
-
-    public Solution replace2(Graph G) {
-        List<Edge> myEdges = new ArrayList<>();
-        for (Edge e : edges) {
-            myEdges.add(e);
-        }
-        List<Edge> graphEdges = new ArrayList<>(G.edges);
-
-        for (int i = 0; i < myEdges.size(); i++) {
-            for (int j = i+1; j < myEdges.size(); j++) {
-                Edge e = myEdges.get(i);
-                Edge e2 = myEdges.get(j);
-                Node<Edge> next = new Node<>();
-                for (Edge x : edges) {
-                    if (x != e && x != e2) {
-                        next = new Node<>(x, next);
-                    }
-                }
-
-                for (int x = 0; x < graphEdges.size(); x++) {
-                    for (int y = x+1; y < graphEdges.size(); y++) {
-                        Solution result = new Solution(new Node<>(graphEdges.get(x), new Node<>(graphEdges.get(y), next)), n);
-                        if (!result.verify(G)) {
-                            continue;
-                        }
-                        if (result.bound() < this.bound()) {
-                            return result;
-                        }
-                    }
-                }
-            }
-        }
-        return this;
-    }
 }

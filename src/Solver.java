@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class Solver extends Thread {
-    public static final int LIMIT = 2000;
+    public static final int LIMIT = 1000;
     double best;
     String output;
     TreeSet<BranchBound> todo = new TreeSet<>(Comparator.comparingDouble(s->s.heuristic().bound() + s.order()*2000));
