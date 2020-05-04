@@ -12,6 +12,8 @@ java -jar HorizonWireless.jar
 
 
 # Other Notes
+If the output says a problem was "cheesed" this refers to the single vertex solution of weight 0. 
+
 1. java -jar HorizonWireless.jar settle
 
 This command tries small adjustments to the current best solutions.
